@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClubSync Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="login-page">
+
+    <div class="brand-panel">
+        <h1>ClubSync</h1>
+        <p>Western Tigers Soccer Club</p>
+        <img src="{{ url_for('static', filename='images/tiger-logo.png') }}" alt="Western Tigers Logo">
+    </div>
+
+    <div class="login-section">
+        <div class="login-card">
+            <h2>Sign In</h2>
+
+            <form method="POST">
+                <label>Email</label>
+                <input type="email" name="email" required>
+
+                <label>Password</label>
+                <input type="password" name="password" required>
+
+                <button type="submit">LOGIN</button>
+            </form>
+
+            {% if error %}
+                <p class="error">{{ error }}</p>
+            {% endif %}
+
+            <h3>Viewer Access</h3>
+            <a href="{{ url_for('viewer_login') }}" class="viewer-btn">Viewer Login</a>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
