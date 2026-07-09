@@ -65,11 +65,9 @@ def login():
             if user["role"] == "Viewer":
                 return redirect(url_for("viewer"))
 
-            if user["role"] in ["Admin", "Coach"]:
-                return redirect(url_for("dashboard"))
+            return redirect(url_for("dashboard"))
 
-        else:
-            error = "Invalid email or password"
+        error = "Invalid email or password"
 
     return render_template("login.html", error=error)
 
@@ -86,22 +84,16 @@ def dashboard():
         if session["role"] != "Admin":
             return redirect(url_for("dashboard"))
 
-        total_players = request.form.get("total_players")
-        attendance_records = request.form.get("attendance_records")
-        overdue_fees = request.form.get("overdue_fees")
-        club_assets = request.form.get("club_assets")
-
         update_dashboard_stats(
-            total_players,
-            attendance_records,
-            overdue_fees,
-            club_assets
+            request.form.get("total_players"),
+            request.form.get("attendance_records"),
+            request.form.get("overdue_fees"),
+            request.form.get("club_assets")
         )
 
         return redirect(url_for("dashboard"))
 
     stats = get_dashboard_stats()
-
     return render_template("dashboard.html", stats=stats)
 
 
