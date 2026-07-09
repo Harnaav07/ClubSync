@@ -1,12 +1,50 @@
+import sqlite3
+
 from flask import Flask, render_template, request, redirect, url_for, session
+from werkzeug.security import check_password_hash
+
 
 app = Flask(__name__)
 app.secret_key = "clubsync_secret_key"
 
-users = {
-    "admin@clubsync.com": {"password": "admin123", "role": "Admin"},
-    "coach@clubsync.com": {"password": "coach123", "role": "Coach"},
-}
+
+def get_user_by_email(email):
+    connection = sqlite3.connect("clubsync.db")
+    connection.row_factory = sqlite3.Row
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+    user = cursor.fetchone()
+
+    connection.close()
+    return user
+
+
+def get_dashboard_stats():
+    connection = sqlite3.connect("clubsync.db")
+    connection.row_factory = sqlite3.Row
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT * FROM dashboard_stats WHERE stat_id = 1")
+    stats = cursor.fetchone()
+
+    connection.close()
+    return stats
+
+
+def update_dashboard_stats(total_players, attendance_records, overdue_fees, club_assets):
+    connection = sqlite3.connect("clubsync.db")
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        UPDATE dashboard_stats
+        SET total_players = ?, attendance_records = ?, overdue_fees = ?, club_assets = ?
+        WHERE stat_id = 1
+    """, (total_players, attendance_records, overdue_fees, club_assets))
+
+    connection.commit()
+    connection.close()
+
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -16,28 +54,73 @@ def login():
         email = request.form.get("email")
         password = request.form.get("password")
 
-        if email in users and users[email]["password"] == password:
-            session["user"] = email
-            session["role"] = users[email]["role"]
-            return redirect(url_for("dashboard"))
+        user = get_user_by_email(email)
+
+        if user and check_password_hash(user["password_hash"], password):
+            session["user_id"] = user["user_id"]
+            session["name"] = user["name"]
+            session["email"] = user["email"]
+            session["role"] = user["role"]
+
+            if user["role"] == "Viewer":
+                return redirect(url_for("viewer"))
+
+            if user["role"] in ["Admin", "Coach"]:
+                return redirect(url_for("dashboard"))
+
         else:
             error = "Invalid email or password"
 
     return render_template("login.html", error=error)
 
-@app.route("/viewer-login")
-def viewer_login():
-    session["user"] = "viewer"
-    session["role"] = "Viewer"
-    return redirect(url_for("viewer"))
 
-@app.route("/dashboard")
+@app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
-    return "Dashboard page coming next"
+    if "role" not in session:
+        return redirect(url_for("login"))
+
+    if session["role"] == "Viewer":
+        return redirect(url_for("viewer"))
+
+    if request.method == "POST":
+        if session["role"] != "Admin":
+            return redirect(url_for("dashboard"))
+
+        total_players = request.form.get("total_players")
+        attendance_records = request.form.get("attendance_records")
+        overdue_fees = request.form.get("overdue_fees")
+        club_assets = request.form.get("club_assets")
+
+        update_dashboard_stats(
+            total_players,
+            attendance_records,
+            overdue_fees,
+            club_assets
+        )
+
+        return redirect(url_for("dashboard"))
+
+    stats = get_dashboard_stats()
+
+    return render_template("dashboard.html", stats=stats)
+
 
 @app.route("/viewer")
 def viewer():
-    return "Viewer page coming next"
+    if "role" not in session:
+        return redirect(url_for("login"))
+
+    if session["role"] != "Viewer":
+        return redirect(url_for("dashboard"))
+
+    return render_template("viewer.html")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
 
 if __name__ == "__main__":
     app.run(debug=True)

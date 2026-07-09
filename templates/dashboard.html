@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClubSync Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="app-layout">
+
+    <aside class="sidebar">
+        <h1>ClubSync</h1>
+
+        <nav>
+            <a class="active" href="/dashboard">Dashboard</a>
+            <a href="#">Players</a>
+            <a href="#">Attendance</a>
+            <a href="#">Teams</a>
+            <a href="#">Fees</a>
+            <a href="#">Assets</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+
+        <div class="top-bar">
+            <div>
+                <h2>Dashboard</h2>
+                <p>Western Tigers Soccer Club Management Overview</p>
+            </div>
+
+            <div class="user-box">
+                {{ session["name"] }}<br>
+                <span>{{ session["role"] }}</span>
+            </div>
+        </div>
+
+        <section class="summary-grid">
+            <div class="summary-card">
+                <h3>Total Players</h3>
+                <p>{{ stats["total_players"] }}</p>
+            </div>
+
+            <div class="summary-card">
+                <h3>Attendance Records</h3>
+                <p>{{ stats["attendance_records"] }}</p>
+            </div>
+
+            <div class="summary-card">
+                <h3>Overdue Fees</h3>
+                <p>{{ stats["overdue_fees"] }}</p>
+            </div>
+
+            <div class="summary-card">
+                <h3>Club Assets</h3>
+                <p>{{ stats["club_assets"] }}</p>
+            </div>
+        </section>
+
+        {% if session["role"] == "Admin" %}
+        <form method="POST" class="edit-dashboard-form">
+            <h3>Edit Dashboard Statistics</h3>
+
+            <input type="number" name="total_players" value="{{ stats['total_players'] }}" required>
+            <input type="number" name="attendance_records" value="{{ stats['attendance_records'] }}" required>
+            <input type="number" name="overdue_fees" value="{{ stats['overdue_fees'] }}" required>
+            <input type="number" name="club_assets" value="{{ stats['club_assets'] }}" required>
+
+            <button type="submit">Update Dashboard</button>
+        </form>
+        {% endif %}
+
+        <section class="dashboard-sections">
+            <div class="panel large-panel">
+                <h3>Attendance History</h3>
+
+                <div class="fake-chart">
+                    <div style="height: 45%;"></div>
+                    <div style="height: 70%;"></div>
+                    <div style="height: 55%;"></div>
+                    <div style="height: 85%;"></div>
+                    <div style="height: 65%;"></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>Overdue Fee Summary</h3>
+
+                <ul class="fee-list">
+                    <li>U14 Team - 3 unpaid</li>
+                    <li>U16 Team - 2 unpaid</li>
+                    <li>Senior Team - 4 unpaid</li>
+                </ul>
+            </div>
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>
