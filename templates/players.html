@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>ClubSync Player Management</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+
+<div class="app-layout">
+
+    <aside class="sidebar">
+        <h1>ClubSync</h1>
+
+        <nav>
+            <a href="{{ url_for('dashboard') }}">
+                Dashboard
+            </a>
+
+            <a
+                class="active"
+                href="{{ url_for('players') }}"
+            >
+                Players
+            </a>
+
+            <a href="#">Attendance</a>
+            <a href="#">Teams</a>
+            <a href="#">Fees</a>
+            <a href="#">Assets</a>
+
+            <a href="{{ url_for('logout') }}">
+                Logout
+            </a>
+        </nav>
+    </aside>
+
+
+    <main class="main-content">
+
+        <div class="top-bar">
+            <div>
+                <h2>Player Management</h2>
+
+                <p>
+                    Manage Western Tigers player records
+                </p>
+            </div>
+
+            <div class="user-box">
+                {{ session["role"] }}
+            </div>
+        </div>
+
+
+        <section class="players-toolbar">
+
+            <form
+                method="GET"
+                action="{{ url_for('players') }}"
+                class="player-search-form"
+            >
+
+                <input
+                    type="text"
+                    name="search"
+                    placeholder="Search by player name or position"
+                    value="{{ search }}"
+                >
+
+                <select name="age_group">
+                    <option value="">
+                        All Age Groups
+                    </option>
+
+                    {% for group in [
+                        "U10",
+                        "U12",
+                        "U14",
+                        "U16",
+                        "U18",
+                        "Senior"
+                    ] %}
+
+                    <option
+                        value="{{ group }}"
+                        {% if selected_age_group == group %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ group }}
+                    </option>
+
+                    {% endfor %}
+                </select>
+
+
+                <select name="team">
+                    <option value="">
+                        All Teams
+                    </option>
+
+                    {% for team_record in teams %}
+
+                    <option
+                        value="{{ team_record['team'] }}"
+                        {% if selected_team == team_record['team'] %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ team_record["team"] }}
+                    </option>
+
+                    {% endfor %}
+                </select>
+
+
+                <button type="submit">
+                    Search
+                </button>
+
+                <a
+                    href="{{ url_for('players') }}"
+                    class="clear-filter-button"
+                >
+                    Clear
+                </a>
+            </form>
+
+
+            {% if session["role"] == "Admin" %}
+
+            <button
+                type="button"
+                class="add-player-button"
+                onclick="openAddPlayerModal()"
+            >
+                + Add Player
+            </button>
+
+            {% endif %}
+
+        </section>
+
+
+        <section class="player-table-container">
+
+            <table class="player-table">
+
+                <thead>
+                    <tr>
+                        <th>Player ID</th>
+                        <th>Name</th>
+                        <th>Age Group</th>
+                        <th>Team</th>
+                        <th>Position</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+
+                <tbody>
+
+                    {% for player in players %}
+
+                    <tr>
+                        <td>
+                            P-{{ "%04d"|format(player["player_id"]) }}
+                        </td>
+
+                        <td>
+                            {{ player["first_name"] }}
+                            {{ player["last_name"] }}
+                        </td>
+
+                        <td>
+                            {{ player["age_group"] }}
+                        </td>
+
+                        <td>
+                            {{ player["team"] }}
+                        </td>
+
+                        <td>
+                            {{ player["position"] }}
+                        </td>
+
+                        <td>
+                            <span
+                                class="player-status
+                                {% if player['registration_status'] == 'Active' %}
+                                    active-status
+                                {% else %}
+                                    inactive-status
+                                {% endif %}"
+                            >
+                                {{ player["registration_status"] }}
+                            </span>
+                        </td>
+
+                        <td class="player-actions">
+
+                            {% if session["role"] == "Admin" %}
+
+                            <button
+                                type="button"
+                                class="edit-player-button"
+                                onclick="openEditPlayerModal(
+                                    '{{ player['player_id'] }}',
+                                    '{{ player['first_name']|e }}',
+                                    '{{ player['last_name']|e }}',
+                                    '{{ player['date_of_birth'] }}',
+                                    '{{ player['age_group'] }}',
+                                    '{{ player['team']|e }}',
+                                    '{{ player['position'] }}',
+                                    '{{ player['contact_phone']|e }}',
+                                    '{{ player['emergency_contact']|e }}',
+                                    '{{ player['medical_notes']|e }}',
+                                    '{{ player['registration_status'] }}'
+                                )"
+                            >
+                                Edit
+                            </button>
+
+
+                            <form
+                                method="POST"
+                                action="{{ url_for(
+                                    'delete_player',
+                                    player_id=player['player_id']
+                                ) }}"
+                                class="delete-player-form"
+                                onsubmit="return confirm(
+                                    'Are you sure you want to delete this player?'
+                                );"
+                            >
+                                <button
+                                    type="submit"
+                                    class="delete-player-button"
+                                >
+                                    Delete
+                                </button>
+                            </form>
+
+                            {% else %}
+
+                            <span class="coach-view-label">
+                                View only
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+                        <td
+                            colspan="7"
+                            class="empty-table-message"
+                        >
+                            No player records were found.
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+{% if session["role"] == "Admin" %}
+
+<div
+    id="addPlayerModal"
+    class="player-modal"
+>
+
+    <div class="player-modal-content">
+
+        <button
+            type="button"
+            class="close-modal-button"
+            onclick="closeAddPlayerModal()"
+        >
+            &times;
+        </button>
+
+        <h2>Add Player</h2>
+
+        <form
+            method="POST"
+            action="{{ url_for('add_player') }}"
+            class="player-details-form"
+        >
+
+            <div class="form-grid">
+
+                <div>
+                    <label>First Name</label>
+
+                    <input
+                        type="text"
+                        name="first_name"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label>Last Name</label>
+
+                    <input
+                        type="text"
+                        name="last_name"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label>Date of Birth</label>
+
+                    <input
+                        type="date"
+                        name="date_of_birth"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label>Age Group</label>
+
+                    <select
+                        name="age_group"
+                        required
+                    >
+                        <option value="">Select</option>
+                        <option value="U10">U10</option>
+                        <option value="U12">U12</option>
+                        <option value="U14">U14</option>
+                        <option value="U16">U16</option>
+                        <option value="U18">U18</option>
+                        <option value="Senior">Senior</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label>Team</label>
+
+                    <input
+                        type="text"
+                        name="team"
+                        placeholder="Example: U14 Tigers"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label>Position</label>
+
+                    <select
+                        name="position"
+                        required
+                    >
+                        <option value="">Select</option>
+                        <option value="Goalkeeper">Goalkeeper</option>
+                        <option value="Defender">Defender</option>
+                        <option value="Midfielder">Midfielder</option>
+                        <option value="Forward">Forward</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label>Contact Phone</label>
+
+                    <input
+                        type="tel"
+                        name="contact_phone"
+                    >
+                </div>
+
+                <div>
+                    <label>Emergency Contact</label>
+
+                    <input
+                        type="text"
+                        name="emergency_contact"
+                    >
+                </div>
+
+                <div>
+                    <label>Registration Status</label>
+
+                    <select
+                        name="registration_status"
+                        required
+                    >
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+
+                <div class="full-width-field">
+                    <label>Medical Notes</label>
+
+                    <textarea
+                        name="medical_notes"
+                        maxlength="300"
+                    ></textarea>
+                </div>
+
+            </div>
+
+            <button
+                type="submit"
+                class="save-player-button"
+            >
+                Save Player
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<div
+    id="editPlayerModal"
+    class="player-modal"
+>
+
+    <div class="player-modal-content">
+
+        <button
+            type="button"
+            class="close-modal-button"
+            onclick="closeEditPlayerModal()"
+        >
+            &times;
+        </button>
+
+        <h2>Edit Player</h2>
+
+        <form
+            id="editPlayerForm"
+            method="POST"
+            class="player-details-form"
+        >
+
+            <div class="form-grid">
+
+                <div>
+                    <label>First Name</label>
+                    <input id="editFirstName" name="first_name" required>
+                </div>
+
+                <div>
+                    <label>Last Name</label>
+                    <input id="editLastName" name="last_name" required>
+                </div>
+
+                <div>
+                    <label>Date of Birth</label>
+                    <input id="editDateOfBirth" type="date" name="date_of_birth" required>
+                </div>
+
+                <div>
+                    <label>Age Group</label>
+
+                    <select id="editAgeGroup" name="age_group" required>
+                        <option value="U10">U10</option>
+                        <option value="U12">U12</option>
+                        <option value="U14">U14</option>
+                        <option value="U16">U16</option>
+                        <option value="U18">U18</option>
+                        <option value="Senior">Senior</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label>Team</label>
+                    <input id="editTeam" name="team" required>
+                </div>
+
+                <div>
+                    <label>Position</label>
+
+                    <select id="editPosition" name="position" required>
+                        <option value="Goalkeeper">Goalkeeper</option>
+                        <option value="Defender">Defender</option>
+                        <option value="Midfielder">Midfielder</option>
+                        <option value="Forward">Forward</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label>Contact Phone</label>
+                    <input id="editContactPhone" name="contact_phone">
+                </div>
+
+                <div>
+                    <label>Emergency Contact</label>
+                    <input id="editEmergencyContact" name="emergency_contact">
+                </div>
+
+                <div>
+                    <label>Registration Status</label>
+
+                    <select
+                        id="editRegistrationStatus"
+                        name="registration_status"
+                        required
+                    >
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+
+                <div class="full-width-field">
+                    <label>Medical Notes</label>
+
+                    <textarea
+                        id="editMedicalNotes"
+                        name="medical_notes"
+                        maxlength="300"
+                    ></textarea>
+                </div>
+
+            </div>
+
+            <button
+                type="submit"
+                class="save-player-button"
+            >
+                Update Player
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endif %}
+
+
+<script>
+    function openAddPlayerModal() {
+        document.getElementById("addPlayerModal").style.display = "flex";
+    }
+
+    function closeAddPlayerModal() {
+        document.getElementById("addPlayerModal").style.display = "none";
+    }
+
+    function openEditPlayerModal(
+        playerId,
+        firstName,
+        lastName,
+        dateOfBirth,
+        ageGroup,
+        team,
+        position,
+        contactPhone,
+        emergencyContact,
+        medicalNotes,
+        registrationStatus
+    ) {
+        const form = document.getElementById("editPlayerForm");
+
+        form.action = "/players/edit/" + playerId;
+
+        document.getElementById("editFirstName").value = firstName;
+        document.getElementById("editLastName").value = lastName;
+        document.getElementById("editDateOfBirth").value = dateOfBirth;
+        document.getElementById("editAgeGroup").value = ageGroup;
+        document.getElementById("editTeam").value = team;
+        document.getElementById("editPosition").value = position;
+        document.getElementById("editContactPhone").value = contactPhone;
+        document.getElementById("editEmergencyContact").value = emergencyContact;
+        document.getElementById("editMedicalNotes").value = medicalNotes;
+        document.getElementById("editRegistrationStatus").value =
+            registrationStatus;
+
+        document.getElementById("editPlayerModal").style.display = "flex";
+    }
+
+    function closeEditPlayerModal() {
+        document.getElementById("editPlayerModal").style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        const addModal = document.getElementById("addPlayerModal");
+        const editModal = document.getElementById("editPlayerModal");
+
+        if (event.target === addModal) {
+            closeAddPlayerModal();
+        }
+
+        if (event.target === editModal) {
+            closeEditPlayerModal();
+        }
+    };
+</script>
+
+</body>
+</html>
