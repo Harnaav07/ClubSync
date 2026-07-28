@@ -1,22 +1,11 @@
-# ==========================================
-# ClubSync Database Setup
-# Creates all database tables and inserts
-# the default user accounts and statistics.
-# ==========================================
-
-
-# ==========================================
-# Import required libraries
-# ==========================================
-
 import sqlite3
 
 from werkzeug.security import generate_password_hash
 
 
-# ==========================================
+
 # Connect to the SQLite database
-# ==========================================
+
 
 connection = sqlite3.connect("clubsync.db")
 
@@ -27,10 +16,10 @@ connection.execute("PRAGMA foreign_keys = ON")
 cursor = connection.cursor()
 
 
-# ==========================================
+
 # Users Table
 # Stores login and role information.
-# ==========================================
+
 
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
@@ -43,11 +32,11 @@ cursor.execute("""
 """)
 
 
-# ==========================================
+
 # Default User Accounts
 # Passwords are securely hashed before
 # being stored in the database.
-# ==========================================
+
 
 users = [
     (
@@ -90,11 +79,11 @@ for user in users:
         pass
 
 
-# ==========================================
+
 # Dashboard Statistics Table
 # Stores summary values displayed on the
 # ClubSync dashboard.
-# ==========================================
+
 
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS dashboard_stats (
@@ -126,11 +115,11 @@ if cursor.fetchone()[0] == 0:
     """)
 
 
-# ==========================================
+
 # Players Table
 # Stores player, team, contact and
 # registration information.
-# ==========================================
+
 
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS players (
@@ -149,11 +138,11 @@ cursor.execute("""
 """)
 
 
-# ==========================================
+
 # Attendance Table
 # Stores one attendance status for each
 # player on each attendance date.
-# ==========================================
+
 
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS attendance (
@@ -181,9 +170,9 @@ cursor.execute("""
 """)
 
 
-# ==========================================
+
 # Save changes and close the database
-# ==========================================
+
 
 connection.commit()
 connection.close()
