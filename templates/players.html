@@ -20,6 +20,7 @@
 
 <div class="app-layout">
 
+    <!-- Navigation sidebar -->
     <aside class="sidebar">
         <h1>ClubSync</h1>
 
@@ -35,10 +36,21 @@
                 Players
             </a>
 
-            <a href="#">Attendance</a>
-            <a href="#">Teams</a>
-            <a href="#">Fees</a>
-            <a href="#">Assets</a>
+            <a href="{{ url_for('attendance') }}">
+                Attendance
+            </a>
+
+            <a href="#">
+                Teams
+            </a>
+
+            <a href="#">
+                Fees
+            </a>
+
+            <a href="#">
+                Assets
+            </a>
 
             <a href="{{ url_for('logout') }}">
                 Logout
@@ -46,7 +58,7 @@
         </nav>
     </aside>
 
-
+    <!-- Main content -->
     <main class="main-content">
 
         <div class="top-bar">
@@ -62,7 +74,6 @@
                 {{ session["role"] }}
             </div>
         </div>
-
 
         <section class="players-toolbar">
 
@@ -105,7 +116,6 @@
                     {% endfor %}
                 </select>
 
-
                 <select name="team">
                     <option value="">
                         All Teams
@@ -125,7 +135,6 @@
                     {% endfor %}
                 </select>
 
-
                 <button type="submit">
                     Search
                 </button>
@@ -137,7 +146,6 @@
                     Clear
                 </a>
             </form>
-
 
             {% if session["role"] == "Admin" %}
 
@@ -152,7 +160,6 @@
             {% endif %}
 
         </section>
-
 
         <section class="player-table-container">
 
@@ -169,7 +176,6 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
-
 
                 <tbody>
 
@@ -234,7 +240,6 @@
                                 Edit
                             </button>
 
-
                             <form
                                 method="POST"
                                 action="{{ url_for(
@@ -287,7 +292,6 @@
     </main>
 
 </div>
-
 
 {% if session["role"] == "Admin" %}
 
@@ -363,7 +367,7 @@
                     </select>
                 </div>
 
-                <div>
+                                <div>
                     <label>Team</label>
 
                     <input
@@ -443,7 +447,6 @@
 
 </div>
 
-
 <div
     id="editPlayerModal"
     class="player-modal"
@@ -471,23 +474,43 @@
 
                 <div>
                     <label>First Name</label>
-                    <input id="editFirstName" name="first_name" required>
+
+                    <input
+                        id="editFirstName"
+                        name="first_name"
+                        required
+                    >
                 </div>
 
                 <div>
                     <label>Last Name</label>
-                    <input id="editLastName" name="last_name" required>
+
+                    <input
+                        id="editLastName"
+                        name="last_name"
+                        required
+                    >
                 </div>
 
                 <div>
                     <label>Date of Birth</label>
-                    <input id="editDateOfBirth" type="date" name="date_of_birth" required>
+
+                    <input
+                        id="editDateOfBirth"
+                        type="date"
+                        name="date_of_birth"
+                        required
+                    >
                 </div>
 
                 <div>
                     <label>Age Group</label>
 
-                    <select id="editAgeGroup" name="age_group" required>
+                    <select
+                        id="editAgeGroup"
+                        name="age_group"
+                        required
+                    >
                         <option value="U10">U10</option>
                         <option value="U12">U12</option>
                         <option value="U14">U14</option>
@@ -499,13 +522,22 @@
 
                 <div>
                     <label>Team</label>
-                    <input id="editTeam" name="team" required>
+
+                    <input
+                        id="editTeam"
+                        name="team"
+                        required
+                    >
                 </div>
 
                 <div>
                     <label>Position</label>
 
-                    <select id="editPosition" name="position" required>
+                    <select
+                        id="editPosition"
+                        name="position"
+                        required
+                    >
                         <option value="Goalkeeper">Goalkeeper</option>
                         <option value="Defender">Defender</option>
                         <option value="Midfielder">Midfielder</option>
@@ -515,12 +547,20 @@
 
                 <div>
                     <label>Contact Phone</label>
-                    <input id="editContactPhone" name="contact_phone">
+
+                    <input
+                        id="editContactPhone"
+                        name="contact_phone"
+                    >
                 </div>
 
                 <div>
                     <label>Emergency Contact</label>
-                    <input id="editEmergencyContact" name="emergency_contact">
+
+                    <input
+                        id="editEmergencyContact"
+                        name="emergency_contact"
+                    >
                 </div>
 
                 <div>
@@ -562,7 +602,6 @@
 </div>
 
 {% endif %}
-
 
 <script>
     function openAddPlayerModal() {

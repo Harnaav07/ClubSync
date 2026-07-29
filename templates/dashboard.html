@@ -13,6 +13,7 @@
 
 <div class="app-layout">
 
+    <!-- Navigation sidebar -->
     <aside class="sidebar">
         <h1>ClubSync</h1>
 
@@ -28,7 +29,7 @@
                 Players
             </a>
 
-            <a href="#">
+            <a href="{{ url_for('attendance') }}">
                 Attendance
             </a>
 
@@ -51,8 +52,10 @@
     </aside>
 
 
+    <!-- Main dashboard content -->
     <main class="main-content">
 
+        <!-- Dashboard heading -->
         <div class="top-bar">
             <div>
                 <h2>Dashboard</h2>
@@ -68,24 +71,31 @@
         </div>
 
 
+        <!-- Dashboard summary cards -->
         <section class="summary-grid">
 
-            <div class="summary-card">
+            <a
+                href="{{ url_for('players') }}"
+                class="summary-card summary-card-link"
+            >
                 <h3>Total Players</h3>
 
                 <p>
                     {{ stats["total_players"] }}
                 </p>
-            </div>
+            </a>
 
 
-            <div class="summary-card">
+            <a
+                href="{{ url_for('attendance') }}"
+                class="summary-card summary-card-link"
+            >
                 <h3>Attendance Records</h3>
 
                 <p>
                     {{ stats["attendance_records"] }}
                 </p>
-            </div>
+            </a>
 
 
             <div class="summary-card">
@@ -108,6 +118,7 @@
         </section>
 
 
+        <!-- Admin dashboard statistics form -->
         {% if session["role"] == "Admin" %}
 
         <form
@@ -150,6 +161,7 @@
         {% endif %}
 
 
+        <!-- Dashboard information panels -->
         <section class="dashboard-sections">
 
             <div class="panel large-panel">
