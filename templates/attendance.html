@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <!-- Page setup -->
     <meta charset="UTF-8">
 
     <meta
@@ -10,219 +8,342 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Attendance | ClubSync</title>
+    <title>ClubSync Attendance</title>
 
-    <!-- Main stylesheet -->
     <link
         rel="stylesheet"
         href="{{ url_for('static', filename='css/style.css') }}"
     >
+
+    <style>
+        .attendance-page {
+            background: #ececec;
+            min-height: 100vh;
+        }
+
+        .attendance-details-card {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            margin: 34px 38px 42px;
+            padding: 12px 36px 24px;
+            background: #ffffff;
+            border: 2px solid #d4d4d4;
+            border-radius: 24px;
+        }
+
+        .attendance-detail-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .attendance-detail-field label {
+            font-size: 18px;
+            color: #111111;
+        }
+
+        .attendance-detail-field input,
+        .attendance-detail-field select {
+            width: 100%;
+            min-height: 68px;
+            box-sizing: border-box;
+            border: 2px solid #d4d4d4;
+            border-radius: 14px;
+            padding: 12px 18px;
+            background: #ffffff;
+            color: #111111;
+            text-align: center;
+            font: inherit;
+            font-size: 18px;
+        }
+
+        .attendance-table-card {
+            margin: 0 34px 34px;
+            padding: 14px 32px 16px;
+            background: #ffffff;
+            border: 2px solid #d4d4d4;
+            border-radius: 28px;
+        }
+
+        .attendance-table-wrapper {
+            overflow-x: auto;
+        }
+
+        .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 2px solid #bdbdbd;
+            background: #ffffff;
+        }
+
+        .attendance-table th,
+        .attendance-table td {
+            padding: 16px 24px;
+            border-bottom: 2px solid #bdbdbd;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .attendance-table th {
+            background: #f4f4f4;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .attendance-table th:first-child,
+        .attendance-table td:first-child {
+            text-align: left;
+        }
+
+        .attendance-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .attendance-player-name {
+            font-size: 19px;
+            color: #111111;
+        }
+
+        .attendance-choice {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .attendance-choice-label {
+            display: inline-flex;
+            min-width: 112px;
+            min-height: 50px;
+            box-sizing: border-box;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid #d4d4d4;
+            border-radius: 12px;
+            background: #ffffff;
+            color: #111111;
+            font-size: 17px;
+            cursor: pointer;
+            transition: 0.15s ease;
+        }
+
+        .attendance-choice[value="Present"]:checked + .present-label {
+            background: #b9efc3;
+            border-color: #1c6b2b;
+        }
+
+        .attendance-choice[value="Absent"]:checked + .absent-label {
+            background: #ff777d;
+            border-color: #cc111a;
+        }
+
+        .attendance-choice[value="Late"]:checked + .late-label {
+            background: #ffd57e;
+            border-color: #ffb400;
+        }
+
+        .attendance-note-input {
+            width: 100%;
+            min-width: 210px;
+            min-height: 50px;
+            box-sizing: border-box;
+            border: 2px solid #d4d4d4;
+            border-radius: 12px;
+            padding: 10px 14px;
+            text-align: center;
+            font: inherit;
+            font-size: 16px;
+        }
+
+        .attendance-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .attendance-actions button {
+            border: none;
+            border-radius: 10px;
+            padding: 12px 20px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .mark-all-button {
+            background: #e2e8f0;
+            color: #1f2937;
+        }
+
+        .save-attendance-button {
+            background: #166534;
+            color: #ffffff;
+        }
+
+        .attendance-message {
+            margin: 22px 38px 0;
+            padding: 12px 16px;
+            border: 1px solid #86c99b;
+            border-radius: 10px;
+            background: #eaf8ef;
+            color: #166534;
+            font-weight: 700;
+        }
+
+        .attendance-empty-state {
+            padding: 30px !important;
+            text-align: center !important;
+            color: #6b7280;
+        }
+
+        @media (max-width: 950px) {
+            .attendance-details-card {
+                grid-template-columns: 1fr;
+            }
+
+            .attendance-table-card {
+                padding: 12px;
+            }
+        }
+    </style>
 </head>
 
-<body class="attendance-body">
+<body>
 
-    <div class="attendance-layout">
+<div class="app-layout">
 
-        <!-- Sidebar -->
-        <aside class="attendance-sidebar">
+    <!-- Navigation sidebar -->
+    <aside class="sidebar">
+        <h1>ClubSync</h1>
 
-            <div class="attendance-brand">
-                <div class="attendance-brand-mark">WT</div>
-
-                <div>
-                    <h1>ClubSync</h1>
-                    <p>Western Tigers</p>
-                </div>
-            </div>
-
-            <nav class="attendance-navigation">
-
-                <a href="{{ url_for('dashboard') }}">
-                    Dashboard
-                </a>
-
-                <a href="{{ url_for('players') }}">
-                    Players
-                </a>
-
-                <a
-                    class="active"
-                    href="{{ url_for('attendance') }}"
-                >
-                    Attendance
-                </a>
-
-                <!-- Future pages -->
-                <a href="#">Teams</a>
-                <a href="#">Fees</a>
-                <a href="#">Assets</a>
-
-            </nav>
-
-            <a
-                class="attendance-logout"
-                href="{{ url_for('logout') }}"
-            >
-                Logout
+        <nav>
+            <a href="{{ url_for('dashboard') }}">
+                Dashboard
             </a>
 
-        </aside>
+            <a href="{{ url_for('players') }}">
+                Players
+            </a>
 
-
-        <!-- Main content -->
-        <main class="attendance-main">
-
-            <!-- Top bar -->
-            <header class="attendance-topbar">
-
-                <div>
-                    <p class="attendance-page-label">
-                        Club management
-                    </p>
-
-                    <h2>Player Attendance</h2>
-                </div>
-
-                <div class="attendance-user-role">
-                    {{ session["role"] }}
-                </div>
-
-            </header>
-
-
-            <!-- Page heading -->
-            <section class="attendance-heading">
-
-                <div>
-                    <h3>Record Attendance</h3>
-
-                    <p>
-                        Select a date and mark each active
-                        player as present, absent or late.
-                    </p>
-                </div>
-
-                <button
-                    type="button"
-                    class="attendance-present-all"
-                    onclick="markAllPlayers('Present')"
-                >
-                    Mark All Present
-                </button>
-
-            </section>
-
-
-            <!-- Success message -->
-            {% if saved %}
-                <div
-                    class="attendance-message"
-                    role="status"
-                >
-                    Attendance was saved successfully.
-                </div>
-            {% endif %}
-
-
-            <!-- Filters -->
-            <form
-                class="attendance-filters"
-                method="GET"
-                action="{{ url_for('attendance') }}"
+            <a
+                class="active"
+                href="{{ url_for('attendance') }}"
             >
+                Attendance
+            </a>
 
-                <div class="attendance-filter-field">
+            <a href="#">
+                Teams
+            </a>
 
-                    <label for="attendance_date">
-                        Attendance Date
-                    </label>
+            <a href="#">
+                Fees
+            </a>
 
-                    <input
-                        id="attendance_date"
-                        name="attendance_date"
-                        type="date"
-                        value="{{ selected_date }}"
-                        required
-                    >
+            <a href="#">
+                Assets
+            </a>
 
-                </div>
+            <a href="{{ url_for('logout') }}">
+                Logout
+            </a>
+        </nav>
+    </aside>
 
+    <!-- Main attendance content -->
+    <main class="main-content attendance-page">
 
-                <div class="attendance-filter-field">
+        <div class="top-bar">
+            <div>
+                <h2>Attendance</h2>
+            </div>
 
-                    <label for="team">
-                        Team
-                    </label>
+            <div class="user-box">
+                {{ session["role"] }}
+            </div>
+        </div>
 
-                    <select
-                        id="team"
-                        name="team"
-                    >
-                        <option value="">
-                            All teams
+        {% if saved %}
+            <div class="attendance-message">
+                Attendance was saved successfully.
+            </div>
+        {% endif %}
+
+        <!-- Date, team and coach controls -->
+        <form
+            method="GET"
+            action="{{ url_for('attendance') }}"
+            class="attendance-details-card"
+        >
+            <div class="attendance-detail-field">
+                <label for="team">
+                    Age Group
+                </label>
+
+                <select
+                    id="team"
+                    name="team"
+                    onchange="this.form.submit()"
+                >
+                    <option value="">
+                        All Age Groups
+                    </option>
+
+                    {% for team_record in teams %}
+                        <option
+                            value="{{ team_record['team'] }}"
+                            {% if selected_team == team_record['team'] %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ team_record["team"] }}
                         </option>
+                    {% endfor %}
+                </select>
+            </div>
 
-                        {% for team_record in teams %}
-                            <option
-                                value="{{ team_record['team'] }}"
-                                {% if selected_team == team_record['team'] %}
-                                    selected
-                                {% endif %}
-                            >
-                                {{ team_record["team"] }}
-                            </option>
-                        {% endfor %}
-                    </select>
+            <div class="attendance-detail-field">
+                <label for="attendance_date">
+                    Date
+                </label>
 
-                </div>
+                <input
+                    id="attendance_date"
+                    name="attendance_date"
+                    type="date"
+                    value="{{ selected_date }}"
+                    onchange="this.form.submit()"
+                    required
+                >
+            </div>
 
+            <div class="attendance-detail-field">
+                <label for="coach_name">
+                    Coach
+                </label>
 
-                <div class="attendance-filter-field attendance-search-field">
+                <input
+                    id="coach_name"
+                    name="coach_name"
+                    type="text"
+                    value="{{ coach_name if coach_name else session.get('name', session['role']) }}"
+                    placeholder="Enter coach name"
+                    form="attendance-save-form"
+                    {% if session["role"] not in ["Admin", "Coach"] %}
+                        readonly
+                    {% endif %}
+                >
+            </div>
+        </form>
 
-                    <label for="search">
-                        Search Player
-                    </label>
-
-                    <input
-                        id="search"
-                        name="search"
-                        type="search"
-                        value="{{ search }}"
-                        placeholder="Search by name or position"
-                    >
-
-                </div>
-
-
-                <div class="attendance-filter-actions">
-
-                    <button
-                        type="submit"
-                        class="attendance-filter-button"
-                    >
-                        Apply Filters
-                    </button>
-
-                    <a
-                        class="attendance-clear-button"
-                        href="{{ url_for('attendance') }}"
-                    >
-                        Clear
-                    </a>
-
-                </div>
-
-            </form>
-
-
-            <!-- Attendance form -->
+        <!-- Attendance table -->
+        <section class="attendance-table-card">
             <form
+                id="attendance-save-form"
                 method="POST"
                 action="{{ url_for('attendance') }}"
-                class="attendance-record-form"
             >
-
-                <!-- Keep filters after saving -->
                 <input
                     type="hidden"
                     name="attendance_date"
@@ -235,303 +356,156 @@
                     value="{{ selected_team }}"
                 >
 
-                <input
-                    type="hidden"
-                    name="search"
-                    value="{{ search }}"
-                >
-
-
-                <section class="attendance-table-card">
-
-                    <div class="attendance-table-header">
-
-                        <div>
-                            <h3>Active Players</h3>
-
-                            <p>
-                                {{ players|length }}
-                                player{% if players|length != 1 %}s{% endif %}
-                                displayed
-                            </p>
-                        </div>
-
-                        <div class="attendance-quick-actions">
-
-                            <button
-                                type="button"
-                                onclick="markAllPlayers('Absent')"
-                            >
-                                Mark All Absent
-                            </button>
-
-                            <button
-                                type="button"
-                                onclick="clearAllStatuses()"
-                            >
-                                Clear Statuses
-                            </button>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="attendance-table-wrapper">
-
-                        <table class="attendance-table">
-
-                            <thead>
-                                <tr>
-                                    <th>Player</th>
-                                    <th>Age Group</th>
-                                    <th>Team</th>
-                                    <th>Position</th>
-                                    <th>Attendance Status</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-
-                                {% for player in players %}
-
-                                    <tr>
-
-                                        <td>
-                                            <strong>
-                                                {{ player["first_name"] }}
-                                                {{ player["last_name"] }}
-                                            </strong>
-
-                                            <!-- Player ID -->
-                                            <input
-                                                type="hidden"
-                                                name="player_ids"
-                                                value="{{ player['player_id'] }}"
-                                            >
-                                        </td>
-
-                                        <td>
-                                            {{ player["age_group"] }}
-                                        </td>
-
-                                        <td>
-                                            {{ player["team"] }}
-                                        </td>
-
-                                        <td>
-                                            {{ player["position"] }}
-                                        </td>
-
-                                        <td>
-                                            <select
-                                                class="attendance-status-select"
-                                                name="attendance_{{ player['player_id'] }}"
-                                                aria-label="Attendance status for {{ player['first_name'] }} {{ player['last_name'] }}"
-                                            >
-
-                                                <option value="">
-                                                    Select status
-                                                </option>
-
-                                                <option
-                                                    value="Present"
-                                                    {% if player["attendance_status"] == "Present" %}
-                                                        selected
-                                                    {% endif %}
-                                                >
-                                                    Present
-                                                </option>
-
-                                                <option
-                                                    value="Absent"
-                                                    {% if player["attendance_status"] == "Absent" %}
-                                                        selected
-                                                    {% endif %}
-                                                >
-                                                    Absent
-                                                </option>
-
-                                                <option
-                                                    value="Late"
-                                                    {% if player["attendance_status"] == "Late" %}
-                                                        selected
-                                                    {% endif %}
-                                                >
-                                                    Late
-                                                </option>
-
-                                            </select>
-                                        </td>
-
-                                    </tr>
-
-                                {% else %}
-
-                                    <tr>
-                                        <td
-                                            colspan="5"
-                                            class="attendance-empty-state"
-                                        >
-                                            No active players match the
-                                            selected filters.
-                                        </td>
-                                    </tr>
-
-                                {% endfor %}
-
-                            </tbody>
-
-                        </table>
-
-                    </div>
-
-
-                    <div class="attendance-save-area">
-
-                        <p>
-                            Saving again for the same date
-                            updates the existing records.
-                        </p>
-
-                        <button
-                            type="submit"
-                            class="attendance-save-button"
-                            {% if not players %}
-                                disabled
-                            {% endif %}
-                        >
-                            Save Attendance
-                        </button>
-
-                    </div>
-
-                </section>
-
-            </form>
-
-
-            <!-- Attendance history -->
-            <section class="attendance-history-card">
-
-                <div class="attendance-history-heading">
-                    <h3>Recent Attendance History</h3>
-
-                    <p>
-                        Summary of the ten most recent
-                        attendance dates.
-                    </p>
-                </div>
-
-
                 <div class="attendance-table-wrapper">
-
-                    <table class="attendance-history-table">
-
+                    <table class="attendance-table">
                         <thead>
                             <tr>
-                                <th>Date</th>
-                                <th>Total Records</th>
+                                <th>Player</th>
                                 <th>Present</th>
                                 <th>Absent</th>
                                 <th>Late</th>
-                                <th>View</th>
+                                <th>Note</th>
                             </tr>
                         </thead>
 
                         <tbody>
-
-                            {% for record in attendance_history %}
-
+                            {% for player in players %}
                                 <tr>
                                     <td>
-                                        {{ record["attendance_date"] }}
-                                    </td>
+                                        <span class="attendance-player-name">
+                                            {{ player["first_name"] }}
+                                            {{ player["last_name"] }}
+                                        </span>
 
-                                    <td>
-                                        {{ record["total_records"] }}
-                                    </td>
-
-                                    <td>
-                                        {{ record["present_count"] }}
-                                    </td>
-
-                                    <td>
-                                        {{ record["absent_count"] }}
-                                    </td>
-
-                                    <td>
-                                        {{ record["late_count"] }}
-                                    </td>
-
-                                    <td>
-                                        <a
-                                            class="attendance-view-date"
-                                            href="{{ url_for(
-                                                'attendance',
-                                                attendance_date=record['attendance_date']
-                                            ) }}"
+                                        <input
+                                            type="hidden"
+                                            name="player_ids"
+                                            value="{{ player['player_id'] }}"
                                         >
-                                            View
-                                        </a>
+                                    </td>
+
+                                    <td>
+                                        <input
+                                            class="attendance-choice"
+                                            id="present_{{ player['player_id'] }}"
+                                            type="radio"
+                                            name="attendance_{{ player['player_id'] }}"
+                                            value="Present"
+                                            {% if player["attendance_status"] == "Present" %}
+                                                checked
+                                            {% endif %}
+                                        >
+
+                                        <label
+                                            class="attendance-choice-label present-label"
+                                            for="present_{{ player['player_id'] }}"
+                                        >
+                                            Present
+                                        </label>
+                                    </td>
+
+                                    <td>
+                                        <input
+                                            class="attendance-choice"
+                                            id="absent_{{ player['player_id'] }}"
+                                            type="radio"
+                                            name="attendance_{{ player['player_id'] }}"
+                                            value="Absent"
+                                            {% if player["attendance_status"] == "Absent" %}
+                                                checked
+                                            {% endif %}
+                                        >
+
+                                        <label
+                                            class="attendance-choice-label absent-label"
+                                            for="absent_{{ player['player_id'] }}"
+                                        >
+                                            Absent
+                                        </label>
+                                    </td>
+
+                                    <td>
+                                        <input
+                                            class="attendance-choice"
+                                            id="late_{{ player['player_id'] }}"
+                                            type="radio"
+                                            name="attendance_{{ player['player_id'] }}"
+                                            value="Late"
+                                            {% if player["attendance_status"] == "Late" %}
+                                                checked
+                                            {% endif %}
+                                        >
+
+                                        <label
+                                            class="attendance-choice-label late-label"
+                                            for="late_{{ player['player_id'] }}"
+                                        >
+                                            Late
+                                        </label>
+                                    </td>
+
+                                    <td>
+                                        <input
+                                            class="attendance-note-input"
+                                            type="text"
+                                            name="note_{{ player['player_id'] }}"
+                                            value="{{ player.get('attendance_note', '') }}"
+                                            placeholder="Add note"
+                                        >
                                     </td>
                                 </tr>
 
                             {% else %}
-
                                 <tr>
                                     <td
-                                        colspan="6"
+                                        colspan="5"
                                         class="attendance-empty-state"
                                     >
-                                        No attendance history has
-                                        been recorded yet.
+                                        No active players were found for this age group.
                                     </td>
                                 </tr>
-
                             {% endfor %}
-
                         </tbody>
-
                     </table>
-
                 </div>
 
-            </section>
+                <div class="attendance-actions">
+                    <button
+                        type="button"
+                        class="mark-all-button"
+                        onclick="markAllPresent()"
+                    >
+                        Mark All Present
+                    </button>
 
-        </main>
+                    <button
+                        type="submit"
+                        class="save-attendance-button"
+                        {% if not players %}
+                            disabled
+                        {% endif %}
+                    >
+                        Save Attendance
+                    </button>
+                </div>
+            </form>
+        </section>
 
-    </div>
+    </main>
 
+</div>
 
-    <!-- JavaScript -->
-    <script>
+<script>
+    function markAllPresent() {
+        const presentButtons = document.querySelectorAll(
+            'input[type="radio"][value="Present"]'
+        );
 
-        // Set all player statuses
-        function markAllPlayers(status) {
-            const statusSelectors = document.querySelectorAll(
-                ".attendance-status-select"
-            );
-
-            statusSelectors.forEach(function (selector) {
-                selector.value = status;
-            });
-        }
-
-
-        // Clear all player statuses
-        function clearAllStatuses() {
-            const statusSelectors = document.querySelectorAll(
-                ".attendance-status-select"
-            );
-
-            statusSelectors.forEach(function (selector) {
-                selector.value = "";
-            });
-        }
-
-    </script>
+        presentButtons.forEach(function (button) {
+            button.checked = true;
+        });
+    }
+</script>
 
 </body>
-
 </html>
