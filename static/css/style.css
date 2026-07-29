@@ -234,6 +234,18 @@ body {
     color: #073544;
 }
 
+/* Clickable dashboard summary cards */
+
+.summary-card-link {
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.summary-card-link:hover {
+    border-color: #1d6f91;
+    transform: translateY(-3px);
+}
 
 .edit-dashboard-form {
     background: white;
