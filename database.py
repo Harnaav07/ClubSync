@@ -3,9 +3,7 @@ import sqlite3
 from werkzeug.security import generate_password_hash
 
 
-
 # Connect to the SQLite database
-
 
 connection = sqlite3.connect("clubsync.db")
 
@@ -16,10 +14,8 @@ connection.execute("PRAGMA foreign_keys = ON")
 cursor = connection.cursor()
 
 
-
 # Users Table
 # Stores login and role information.
-
 
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
@@ -32,11 +28,9 @@ cursor.execute("""
 """)
 
 
-
 # Default User Accounts
 # Passwords are securely hashed before
 # being stored in the database.
-
 
 users = [
     (
@@ -63,6 +57,7 @@ users = [
 # Insert each default account.
 # Existing accounts are skipped because
 # email addresses must be unique.
+
 for user in users:
     try:
         cursor.execute("""
@@ -79,11 +74,9 @@ for user in users:
         pass
 
 
-
 # Dashboard Statistics Table
 # Stores summary values displayed on the
 # ClubSync dashboard.
-
 
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS dashboard_stats (
@@ -98,6 +91,7 @@ cursor.execute("""
 
 # Check whether an initial statistics record
 # has already been created.
+
 cursor.execute("""
     SELECT COUNT(*)
     FROM dashboard_stats
@@ -115,11 +109,9 @@ if cursor.fetchone()[0] == 0:
     """)
 
 
-
 # Players Table
 # Stores player, team, contact and
 # registration information.
-
 
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS players (
@@ -138,11 +130,9 @@ cursor.execute("""
 """)
 
 
-
 # Attendance Table
 # Stores one attendance status for each
 # player on each attendance date.
-
 
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS attendance (
@@ -157,6 +147,8 @@ cursor.execute("""
                     'Late'
                 )
             ),
+        attendance_note TEXT,
+        coach_name TEXT,
 
         UNIQUE (
             player_id,
@@ -170,9 +162,32 @@ cursor.execute("""
 """)
 
 
+# Update older copies of the attendance table.
+# CREATE TABLE IF NOT EXISTS will not add new
+# columns to an existing table, so these checks
+# safely add the missing fields when required.
+
+cursor.execute("PRAGMA table_info(attendance)")
+
+attendance_columns = [
+    column[1]
+    for column in cursor.fetchall()
+]
+
+if "attendance_note" not in attendance_columns:
+    cursor.execute("""
+        ALTER TABLE attendance
+        ADD COLUMN attendance_note TEXT
+    """)
+
+if "coach_name" not in attendance_columns:
+    cursor.execute("""
+        ALTER TABLE attendance
+        ADD COLUMN coach_name TEXT
+    """)
+
 
 # Save changes and close the database
-
 
 connection.commit()
 connection.close()

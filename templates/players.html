@@ -218,7 +218,7 @@
 
                         <td class="player-actions">
 
-                            {% if session["role"] == "Admin" %}
+                                                        {% if session["role"] == "Admin" %}
 
                             <button
                                 type="button"
@@ -367,7 +367,7 @@
                     </select>
                 </div>
 
-                                <div>
+                <div>
                     <label>Team</label>
 
                     <input
@@ -393,7 +393,7 @@
                     </select>
                 </div>
 
-                <div>
+                                <div>
                     <label>Contact Phone</label>
 
                     <input
@@ -563,7 +563,7 @@
                     >
                 </div>
 
-                <div>
+                                <div>
                     <label>Registration Status</label>
 
                     <select
@@ -636,7 +636,8 @@
         document.getElementById("editTeam").value = team;
         document.getElementById("editPosition").value = position;
         document.getElementById("editContactPhone").value = contactPhone;
-        document.getElementById("editEmergencyContact").value = emergencyContact;
+        document.getElementById("editEmergencyContact").value =
+            emergencyContact;
         document.getElementById("editMedicalNotes").value = medicalNotes;
         document.getElementById("editRegistrationStatus").value =
             registrationStatus;

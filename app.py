@@ -563,20 +563,15 @@ def attendance():
         date.today().isoformat()
     ).strip()
 
-    # Check the date
+    # Validate the selected date
     try:
         date.fromisoformat(selected_date)
     except ValueError:
         selected_date = date.today().isoformat()
 
-    # Get filters
-    selected_team = request.values.get(
-        "team",
-        ""
-    ).strip()
-
-    search = request.values.get(
-        "search",
+    # Get the selected age group
+    selected_age_group = request.values.get(
+        "age_group",
         ""
     ).strip()
 
@@ -592,37 +587,47 @@ def attendance():
     # Save attendance
     if request.method == "POST":
 
-        # Get displayed player IDs
         player_ids = request.form.getlist(
             "player_ids"
         )
 
+        coach_name = request.form.get(
+            "coach_name",
+            session.get("name", "")
+        ).strip()
+
         for player_id_value in player_ids:
 
-            # Skip invalid IDs
             if not player_id_value.isdigit():
                 continue
 
             player_id = int(player_id_value)
 
-            # Get the selected status
             attendance_status = request.form.get(
                 f"attendance_{player_id}",
                 ""
             ).strip()
 
-            # Skip invalid statuses
+            attendance_note = request.form.get(
+                f"note_{player_id}",
+                ""
+            ).strip()
+
             if attendance_status not in allowed_statuses:
                 continue
 
-            # Check the player is active
+            # Confirm that the player is active
+            # and belongs to the selected age group
             player_exists = connection.execute("""
                 SELECT player_id
                 FROM players
                 WHERE player_id = ?
                   AND registration_status = 'Active'
+                  AND (? = '' OR age_group = ?)
             """, (
                 player_id,
+                selected_age_group,
+                selected_age_group
             )).fetchone()
 
             if not player_exists:
@@ -633,9 +638,11 @@ def attendance():
                 INSERT INTO attendance (
                     player_id,
                     attendance_date,
-                    attendance_status
+                    attendance_status,
+                    attendance_note,
+                    coach_name
                 )
-                VALUES (?, ?, ?)
+                VALUES (?, ?, ?, ?, ?)
 
                 ON CONFLICT (
                     player_id,
@@ -644,140 +651,76 @@ def attendance():
 
                 DO UPDATE SET
                     attendance_status =
-                        excluded.attendance_status
+                        excluded.attendance_status,
+                    attendance_note =
+                        excluded.attendance_note,
+                    coach_name =
+                        excluded.coach_name
             """, (
                 player_id,
                 selected_date,
-                attendance_status
+                attendance_status,
+                attendance_note,
+                coach_name
             ))
 
         connection.commit()
         connection.close()
 
-        # Prevent the form from saving twice
         return redirect(
             url_for(
                 "attendance",
                 attendance_date=selected_date,
-                team=selected_team,
-                search=search,
+                age_group=selected_age_group,
                 saved="1"
             )
         )
 
-    # Get players and attendance for the date
-    attendance_query = """
-        SELECT
-            players.player_id,
-            players.first_name,
-            players.last_name,
-            players.age_group,
-            players.team,
-            players.position,
-            attendance.attendance_status
+    # Do not display players until an age group
+    # has been selected
+    attendance_players = []
 
+    if selected_age_group:
+
+        attendance_players = connection.execute("""
+            SELECT
+                players.player_id,
+                players.first_name,
+                players.last_name,
+                players.age_group,
+                players.team,
+                players.position,
+                attendance.attendance_status,
+                attendance.attendance_note,
+                attendance.coach_name
+
+            FROM players
+
+            LEFT JOIN attendance
+                ON players.player_id =
+                    attendance.player_id
+                AND attendance.attendance_date = ?
+
+            WHERE players.registration_status = 'Active'
+              AND players.age_group = ?
+
+            ORDER BY
+                players.last_name,
+                players.first_name
+        """, (
+            selected_date,
+            selected_age_group
+        )).fetchall()
+
+    # Load active age groups directly from
+    # the saved player database
+    age_groups = connection.execute("""
+        SELECT DISTINCT age_group
         FROM players
-
-        LEFT JOIN attendance
-            ON players.player_id =
-                attendance.player_id
-            AND attendance.attendance_date = ?
-
-        WHERE players.registration_status = 'Active'
-    """
-
-    attendance_parameters = [
-        selected_date
-    ]
-
-    # Filter by team
-    if selected_team:
-        attendance_query += """
-            AND players.team = ?
-        """
-
-        attendance_parameters.append(
-            selected_team
-        )
-
-    # Search by name or position
-    if search:
-        attendance_query += """
-            AND (
-                players.first_name LIKE ?
-                OR players.last_name LIKE ?
-                OR players.position LIKE ?
-            )
-        """
-
-        search_value = f"%{search}%"
-
-        attendance_parameters.extend([
-            search_value,
-            search_value,
-            search_value
-        ])
-
-    # Sort by team and name
-    attendance_query += """
-        ORDER BY
-            players.team,
-            players.last_name,
-            players.first_name
-    """
-
-    attendance_players = connection.execute(
-        attendance_query,
-        attendance_parameters
-    ).fetchall()
-
-    # Get active teams
-    teams = connection.execute("""
-        SELECT DISTINCT team
-        FROM players
-        WHERE team != ''
+        WHERE age_group IS NOT NULL
+          AND TRIM(age_group) != ''
           AND registration_status = 'Active'
-        ORDER BY team
-    """).fetchall()
-
-    # Get the 10 latest attendance dates
-    attendance_history = connection.execute("""
-        SELECT
-            attendance_date,
-
-            COUNT(*) AS total_records,
-
-            SUM(
-                CASE
-                    WHEN attendance_status = 'Present'
-                    THEN 1
-                    ELSE 0
-                END
-            ) AS present_count,
-
-            SUM(
-                CASE
-                    WHEN attendance_status = 'Absent'
-                    THEN 1
-                    ELSE 0
-                END
-            ) AS absent_count,
-
-            SUM(
-                CASE
-                    WHEN attendance_status = 'Late'
-                    THEN 1
-                    ELSE 0
-                END
-            ) AS late_count
-
-        FROM attendance
-
-        GROUP BY attendance_date
-
-        ORDER BY attendance_date DESC
-
-        LIMIT 10
+        ORDER BY age_group
     """).fetchall()
 
     connection.close()
@@ -785,11 +728,9 @@ def attendance():
     return render_template(
         "attendance.html",
         players=attendance_players,
-        teams=teams,
+        age_groups=age_groups,
         selected_date=selected_date,
-        selected_team=selected_team,
-        search=search,
-        attendance_history=attendance_history,
+        selected_age_group=selected_age_group,
         saved=request.args.get("saved") == "1"
     )
 

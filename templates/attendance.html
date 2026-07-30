@@ -251,7 +251,7 @@
         </nav>
     </aside>
 
-    <!-- Main attendance content -->
+        <!-- Main attendance content -->
     <main class="main-content attendance-page">
 
         <div class="top-bar">
@@ -270,34 +270,34 @@
             </div>
         {% endif %}
 
-        <!-- Date, team and coach controls -->
+        <!-- Date, age group and coach controls -->
         <form
             method="GET"
             action="{{ url_for('attendance') }}"
             class="attendance-details-card"
         >
             <div class="attendance-detail-field">
-                <label for="team">
+                <label for="age_group">
                     Age Group
                 </label>
 
                 <select
-                    id="team"
-                    name="team"
+                    id="age_group"
+                    name="age_group"
                     onchange="this.form.submit()"
                 >
                     <option value="">
-                        All Age Groups
+                        Select Age Group
                     </option>
 
-                    {% for team_record in teams %}
+                    {% for age_group_record in age_groups %}
                         <option
-                            value="{{ team_record['team'] }}"
-                            {% if selected_team == team_record['team'] %}
+                            value="{{ age_group_record['age_group'] }}"
+                            {% if selected_age_group == age_group_record['age_group'] %}
                                 selected
                             {% endif %}
                         >
-                            {{ team_record["team"] }}
+                            {{ age_group_record["age_group"] }}
                         </option>
                     {% endfor %}
                 </select>
@@ -352,8 +352,8 @@
 
                 <input
                     type="hidden"
-                    name="team"
-                    value="{{ selected_team }}"
+                    name="age_group"
+                    value="{{ selected_age_group }}"
                 >
 
                 <div class="attendance-table-wrapper">
@@ -371,6 +371,7 @@
                         <tbody>
                             {% for player in players %}
                                 <tr>
+
                                     <td>
                                         <span class="attendance-player-name">
                                             {{ player["first_name"] }}
@@ -384,7 +385,7 @@
                                         >
                                     </td>
 
-                                    <td>
+                                                                        <td>
                                         <input
                                             class="attendance-choice"
                                             id="present_{{ player['player_id'] }}"
@@ -449,10 +450,11 @@
                                             class="attendance-note-input"
                                             type="text"
                                             name="note_{{ player['player_id'] }}"
-                                            value="{{ player.get('attendance_note', '') }}"
+                                            value="{{ player['attendance_note'] or '' }}"
                                             placeholder="Add note"
                                         >
                                     </td>
+
                                 </tr>
 
                             {% else %}
@@ -461,7 +463,7 @@
                                         colspan="5"
                                         class="attendance-empty-state"
                                     >
-                                        No active players were found for this age group.
+                                        Select an age group to display active players.
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -491,7 +493,7 @@
             </form>
         </section>
 
-    </main>
+            </main>
 
 </div>
 
