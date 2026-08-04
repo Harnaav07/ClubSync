@@ -784,6 +784,51 @@ def teams():
 
     connection = get_database_connection()
 
+    # Make sure the team line-ups table exists.
+    # This prevents the Teams page from failing
+    # when database.py has not yet been run.
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS team_lineups (
+            lineup_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            age_group TEXT NOT NULL,
+            formation TEXT NOT NULL
+                CHECK (
+                    formation IN (
+                        '4-3-3',
+                        '4-4-2',
+                        '3-5-2'
+                    )
+                ),
+            slot_name TEXT NOT NULL,
+            player_id INTEGER NOT NULL,
+            saved_by_user_id INTEGER,
+            updated_at TEXT NOT NULL
+                DEFAULT CURRENT_TIMESTAMP,
+
+            UNIQUE (
+                age_group,
+                formation,
+                slot_name
+            ),
+
+            UNIQUE (
+                age_group,
+                formation,
+                player_id
+            ),
+
+            FOREIGN KEY (player_id)
+                REFERENCES players(player_id)
+                ON DELETE CASCADE,
+
+            FOREIGN KEY (saved_by_user_id)
+                REFERENCES users(user_id)
+                ON DELETE SET NULL
+        )
+    """)
+
+    connection.commit()
+
     # Save the selected line-up
     if request.method == "POST":
 
