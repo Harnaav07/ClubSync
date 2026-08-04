@@ -89,8 +89,8 @@ cursor.execute("""
 """)
 
 
-# Check whether an initial statistics record
-# has already been created.
+# Add the first dashboard statistics record
+# only when the table is empty.
 
 cursor.execute("""
     SELECT COUNT(*)
@@ -162,10 +162,8 @@ cursor.execute("""
 """)
 
 
-# Update older copies of the attendance table.
-# CREATE TABLE IF NOT EXISTS will not add new
-# columns to an existing table, so these checks
-# safely add the missing fields when required.
+# Add newer attendance fields to an older
+# copy of the database when needed.
 
 cursor.execute("PRAGMA table_info(attendance)")
 
@@ -185,6 +183,50 @@ if "coach_name" not in attendance_columns:
         ALTER TABLE attendance
         ADD COLUMN coach_name TEXT
     """)
+
+
+# Team Line-ups Table
+# Stores each selected player and pitch
+# position for an age group and formation.
+
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS team_lineups (
+        lineup_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        age_group TEXT NOT NULL,
+        formation TEXT NOT NULL
+            CHECK (
+                formation IN (
+                    '4-3-3',
+                    '4-4-2',
+                    '3-5-2'
+                )
+            ),
+        slot_name TEXT NOT NULL,
+        player_id INTEGER NOT NULL,
+        saved_by_user_id INTEGER,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+        UNIQUE (
+            age_group,
+            formation,
+            slot_name
+        ),
+
+        UNIQUE (
+            age_group,
+            formation,
+            player_id
+        ),
+
+        FOREIGN KEY (player_id)
+            REFERENCES players(player_id)
+            ON DELETE CASCADE,
+
+        FOREIGN KEY (saved_by_user_id)
+            REFERENCES users(user_id)
+            ON DELETE SET NULL
+    )
+""")
 
 
 # Save changes and close the database
