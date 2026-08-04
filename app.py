@@ -736,6 +736,107 @@ def attendance():
 
 
 
+# Teams Management
+
+
+@app.route("/teams", methods=["GET", "POST"])
+def teams():
+
+    # Check login
+    if "role" not in session:
+        return redirect(url_for("login"))
+
+    # Block viewer access
+    if session["role"] == "Viewer":
+        return redirect(url_for("viewer"))
+
+    # Get the selected age group
+    selected_age_group = request.values.get(
+        "age_group",
+        ""
+    ).strip()
+
+    # Get the selected formation
+    selected_formation = request.values.get(
+        "formation",
+        "4-3-3"
+    ).strip()
+
+    allowed_formations = {
+        "4-3-3",
+        "4-4-2",
+        "3-5-2"
+    }
+
+    if selected_formation not in allowed_formations:
+        selected_formation = "4-3-3"
+
+    connection = get_database_connection()
+
+    # Save is only a temporary confirmation for now.
+    # Database storage for line-ups will be added next.
+    if request.method == "POST":
+
+        connection.close()
+
+        return redirect(
+            url_for(
+                "teams",
+                age_group=selected_age_group,
+                formation=selected_formation,
+                saved="1"
+            )
+        )
+
+    # Load active age groups from saved players
+    age_groups = connection.execute("""
+        SELECT DISTINCT age_group
+        FROM players
+        WHERE age_group IS NOT NULL
+          AND TRIM(age_group) != ''
+          AND registration_status = 'Active'
+        ORDER BY age_group
+    """).fetchall()
+
+    # Do not display players until an age group
+    # has been selected
+    team_players = []
+
+    if selected_age_group:
+        team_players = connection.execute("""
+            SELECT
+                player_id,
+                first_name,
+                last_name,
+                age_group,
+                team,
+                position
+
+            FROM players
+
+            WHERE registration_status = 'Active'
+              AND age_group = ?
+
+            ORDER BY
+                last_name,
+                first_name
+        """, (
+            selected_age_group,
+        )).fetchall()
+
+    connection.close()
+
+    return render_template(
+        "teams.html",
+        age_groups=age_groups,
+        selected_age_group=selected_age_group,
+        selected_formation=selected_formation,
+        players=team_players,
+        saved=request.args.get("saved") == "1"
+    )
+
+
+
 # Viewer Page
 
 
