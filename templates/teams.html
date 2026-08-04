@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>ClubSync Team Selection</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+    <style>
+        .teams-page {
+            min-height: 100vh;
+            background: #ececec;
+        }
+
+        .team-selection-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 70px;
+            margin: 28px 32px 44px;
+            padding: 12px 28px 22px;
+            background: #ffffff;
+            border: 2px solid #d4d4d4;
+            border-radius: 22px;
+        }
+
+        .team-control-field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .team-control-field label {
+            color: #111111;
+            font-size: 17px;
+        }
+
+        .team-control-field select {
+            width: 100%;
+            min-height: 66px;
+            box-sizing: border-box;
+            border: 2px solid #d4d4d4;
+            border-radius: 14px;
+            padding: 12px 18px;
+            background: #ffffff;
+            color: #111111;
+            text-align: center;
+            font: inherit;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .team-selection-layout {
+            display: grid;
+            grid-template-columns: 36% 64%;
+            gap: 38px;
+            margin: 0 32px 34px;
+        }
+
+        .available-players-card {
+            min-height: 545px;
+            box-sizing: border-box;
+            padding: 20px 24px 26px;
+            background: #ffffff;
+            border: 2px solid #d4d4d4;
+            border-radius: 25px;
+        }
+
+        .available-players-card h3,
+        .lineup-pitch-card h3 {
+            margin: 0 0 24px;
+            color: #111111;
+            font-size: 27px;
+        }
+
+        .available-player-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .available-player {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+            min-height: 68px;
+            box-sizing: border-box;
+            border: 2px solid #c6c6c6;
+            border-radius: 13px;
+            padding: 12px 20px;
+            background: #e8e8e8;
+            color: #111111;
+            font: inherit;
+            font-size: 20px;
+            cursor: pointer;
+            transition: 0.15s ease;
+        }
+
+        .available-player:hover {
+            border-color: #1d7198;
+            background: #dcecf4;
+        }
+
+        .available-player.selected-player {
+            border-color: #17638a;
+            background: #cfe6f1;
+        }
+
+        .available-player.assigned-player {
+            opacity: 0.55;
+        }
+
+        .player-position {
+            font-weight: 700;
+        }
+
+        .empty-player-list {
+            padding: 30px 12px;
+            color: #6b7280;
+            text-align: center;
+        }
+
+        .lineup-pitch-card {
+            min-height: 545px;
+            box-sizing: border-box;
+            padding: 18px 22px 22px;
+            background: #d8f5ce;
+            border: 2px solid #418d30;
+            border-radius: 34px;
+        }
+
+        .football-pitch {
+            position: relative;
+            width: 100%;
+            min-height: 470px;
+            overflow: hidden;
+        }
+
+        .halfway-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 2px;
+            background: #387d31;
+            transform: translateX(-50%);
+        }
+
+        .centre-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 190px;
+            height: 190px;
+            border: 2px solid #387d31;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .centre-dot {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #387d31;
+            transform: translate(-50%, -50%);
+        }
+
+        .lineup-slot {
+            position: absolute;
+            display: flex;
+            width: 92px;
+            height: 92px;
+            box-sizing: border-box;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid #d4d4d4;
+            border-radius: 50%;
+            background: #ffffff;
+            color: #111111;
+            text-align: center;
+            font-size: 14px;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            transition: 0.15s ease;
+        }
+
+        .lineup-slot:hover {
+            border-color: #17638a;
+        }
+
+        .lineup-slot.selected-slot {
+            border-color: #17638a;
+            box-shadow: 0 0 0 4px rgba(23, 99, 138, 0.18);
+        }
+
+        .lineup-slot.filled-slot {
+            border-color: #2f7d32;
+            background: #ffffff;
+        }
+
+        .slot-player-name {
+            display: block;
+            max-width: 76px;
+            overflow: hidden;
+            font-size: 12px;
+            font-weight: 700;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .slot-position {
+            display: block;
+            margin-top: 3px;
+            font-size: 12px;
+        }
+
+        .slot-forward-left {
+            top: 16%;
+            left: 30%;
+        }
+
+        .slot-forward-right {
+            top: 16%;
+            left: 70%;
+        }
+
+        .slot-midfield-left {
+            top: 45%;
+            left: 24%;
+        }
+
+        .slot-midfield-centre {
+            top: 45%;
+            left: 50%;
+        }
+
+        .slot-midfield-right {
+            top: 45%;
+            left: 76%;
+        }
+
+        .slot-defence-left {
+            top: 73%;
+            left: 29%;
+        }
+
+        .slot-defence-right {
+            top: 73%;
+            left: 71%;
+        }
+
+        .slot-goalkeeper {
+            top: 92%;
+            left: 50%;
+        }
+
+        .team-selection-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin: 0 32px 35px;
+        }
+
+        .team-selection-actions button {
+            border: none;
+            border-radius: 10px;
+            padding: 13px 22px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .clear-lineup-button {
+            background: #dfe5eb;
+            color: #1f2937;
+        }
+
+        .save-lineup-button {
+            background: #17638a;
+            color: #ffffff;
+        }
+
+        .save-lineup-button:hover {
+            background: #124f6f;
+        }
+
+        .team-help-message {
+            margin: 0 32px 20px;
+            color: #5f6875;
+        }
+
+        .team-success-message {
+            margin: 20px 32px 0;
+            padding: 13px 17px;
+            border: 1px solid #83c696;
+            border-radius: 10px;
+            background: #eaf8ef;
+            color: #166534;
+            font-weight: 700;
+        }
+
+        @media (max-width: 1050px) {
+            .team-selection-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .available-players-card {
+                min-height: auto;
+            }
+        }
+
+        @media (max-width: 750px) {
+            .team-selection-controls {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                margin-right: 16px;
+                margin-left: 16px;
+            }
+
+            .team-selection-layout {
+                margin-right: 16px;
+                margin-left: 16px;
+            }
+
+            .lineup-slot {
+                width: 72px;
+                height: 72px;
+            }
+
+            .football-pitch {
+                min-height: 430px;
+            }
+
+            .centre-circle {
+                width: 145px;
+                height: 145px;
+            }
+
+            .team-selection-actions {
+                margin-right: 16px;
+                margin-left: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app-layout">
+
+    <!-- Navigation sidebar -->
+    <aside class="sidebar">
+        <h1>ClubSync</h1>
+
+        <nav>
+            <a href="{{ url_for('dashboard') }}">
+                Dashboard
+            </a>
+
+            <a href="{{ url_for('players') }}">
+                Players
+            </a>
+
+            <a href="{{ url_for('attendance') }}">
+                Attendance
+            </a>
+
+            <a
+                class="active"
+                href="{{ url_for('teams') }}"
+            >
+                Teams
+            </a>
+
+            <a href="#">
+                Fees
+            </a>
+
+            <a href="#">
+                Assets
+            </a>
+
+            <a href="{{ url_for('logout') }}">
+                Logout
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main team selection content -->
+    <main class="main-content teams-page">
+
+        <div class="top-bar">
+            <div>
+                <h2>Team Selection</h2>
+            </div>
+
+            <div class="user-box">
+                {{ session["name"] }} | {{ session["role"] }}
+            </div>
+        </div>
+
+        {% if saved %}
+            <div class="team-success-message">
+                Team line-up was saved successfully.
+            </div>
+        {% endif %}
+
+        <!-- Age group and formation controls -->
+        <form
+            method="GET"
+            action="{{ url_for('teams') }}"
+            class="team-selection-controls"
+        >
+            <div class="team-control-field">
+                <label for="age_group">
+                    Age Group
+                </label>
+
+                <select
+                    id="age_group"
+                    name="age_group"
+                    onchange="this.form.submit()"
+                >
+                    <option value="">
+                        Select Age Group
+                    </option>
+
+                    {% for age_group_record in age_groups %}
+                        <option
+                            value="{{ age_group_record['age_group'] }}"
+                            {% if selected_age_group == age_group_record['age_group'] %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ age_group_record["age_group"] }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="team-control-field">
+                <label for="formation">
+                    Formation
+                </label>
+
+                <select
+                    id="formation"
+                    name="formation"
+                    onchange="this.form.submit()"
+                >
+                    <option
+                        value="4-3-3"
+                        {% if selected_formation == "4-3-3" %}
+                            selected
+                        {% endif %}
+                    >
+                        4-3-3
+                    </option>
+
+                    <option
+                        value="4-4-2"
+                        {% if selected_formation == "4-4-2" %}
+                            selected
+                        {% endif %}
+                    >
+                        4-4-2
+                    </option>
+
+                    <option
+                        value="3-5-2"
+                        {% if selected_formation == "3-5-2" %}
+                            selected
+                        {% endif %}
+                    >
+                        3-5-2
+                    </option>
+                </select>
+            </div>
+        </form>
+
+        <p class="team-help-message">
+            Select a player, then select a position on the pitch.
+            Select a filled position again to remove that player.
+        </p>
+
+        <form
+            id="teamLineupForm"
+            method="POST"
+            action="{{ url_for('teams') }}"
+        >
+            <input
+                type="hidden"
+                name="age_group"
+                value="{{ selected_age_group }}"
+            >
+
+            <input
+                type="hidden"
+                name="formation"
+                value="{{ selected_formation }}"
+            >
+
+            <section class="team-selection-layout">
+
+                <!-- Available players -->
+                <div class="available-players-card">
+                    <h3>Available Players</h3>
+
+                    <div class="available-player-list">
+                        {% for player in players %}
+                            <button
+                                type="button"
+                                class="available-player"
+                                data-player-id="{{ player['player_id'] }}"
+                                data-player-name="{{ player['first_name'] }} {{ player['last_name'] }}"
+                                data-player-position="{{ player['position'] }}"
+                                onclick="selectPlayer(this)"
+                            >
+                                <span>
+                                    {{ player["first_name"] }}
+                                    {{ player["last_name"] }}
+                                </span>
+
+                                <span class="player-position">
+                                    {% if player["position"] == "Goalkeeper" %}
+                                        GK
+                                    {% elif player["position"] == "Defender" %}
+                                        DEF
+                                    {% elif player["position"] == "Midfielder" %}
+                                        MID
+                                    {% elif player["position"] == "Forward" %}
+                                        FWD
+                                    {% else %}
+                                        {{ player["position"] }}
+                                    {% endif %}
+                                </span>
+                            </button>
+
+                        {% else %}
+                            <div class="empty-player-list">
+                                Select an age group to display available players.
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Football pitch -->
+                <div class="lineup-pitch-card">
+                    <h3>Line-up Pitch</h3>
+
+                    <div class="football-pitch">
+                        <div class="halfway-line"></div>
+                        <div class="centre-circle"></div>
+                        <div class="centre-dot"></div>
+
+                        <button
+                            type="button"
+                            class="lineup-slot slot-forward-left"
+                            data-slot="forward_left"
+                            data-position="FWD"
+                            onclick="selectLineupSlot(this)"
+                        >
+                            <span class="slot-content">FWD</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            class="lineup-slot slot-forward-right"
+                            data-slot="forward_right"
+                            data-position="FWD"
+                            onclick="selectLineupSlot(this)"
+                        >
+                            <span class="slot-content">FWD</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            class="lineup-slot slot-midfield-left"
+                            data-slot="midfield_left"
+                            data-position="MID"
+                            onclick="selectLineupSlot(this)"
+                        >
+                            <span class="slot-content">MID</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            class="lineup-slot slot-midfield-centre"
+                            data-slot="midfield_centre"
+                            data-position="MID"
+                            onclick="selectLineupSlot(this)"
+                        >
+                            <span class="slot-content">MID</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            class="lineup-slot slot-midfield-right"
+                            data-slot="midfield_right"
+                            data-position="MID"
+                            onclick="selectLineupSlot(this)"
+                        >
+                            <span class="slot-content">MID</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            class="lineup-slot slot-defence-left"
+                            data-slot="defence_left"
+                            data-position="DEF"
+                            onclick="selectLineupSlot(this)"
+                        >
+                            <span class="slot-content">DEF</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            class="lineup-slot slot-defence-right"
+                            data-slot="defence_right"
+                            data-position="DEF"
+                            onclick="selectLineupSlot(this)"
+                        >
+                            <span class="slot-content">DEF</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            class="lineup-slot slot-goalkeeper"
+                            data-slot="goalkeeper"
+                            data-position="GK"
+                            onclick="selectLineupSlot(this)"
+                        >
+                            <span class="slot-content">GK</span>
+                        </button>
+                    </div>
+                </div>
+
+            </section>
+
+            <div id="lineupHiddenInputs"></div>
+
+            {% if session["role"] in ["Admin", "Coach"] %}
+                <div class="team-selection-actions">
+                    <button
+                        type="button"
+                        class="clear-lineup-button"
+                        onclick="clearLineup()"
+                    >
+                        Clear Line-up
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="save-lineup-button"
+                        {% if not selected_age_group %}
+                            disabled
+                        {% endif %}
+                    >
+                        Save Line-up
+                    </button>
+                </div>
+            {% endif %}
+        </form>
+
+    </main>
+
+</div>
+
+<script>
+    let selectedPlayer = null;
+
+    function selectPlayer(playerButton) {
+        const playerButtons = document.querySelectorAll(
+            ".available-player"
+        );
+
+        playerButtons.forEach(function (button) {
+            button.classList.remove("selected-player");
+        });
+
+        if (
+            selectedPlayer &&
+            selectedPlayer.playerId === playerButton.dataset.playerId
+        ) {
+            selectedPlayer = null;
+            return;
+        }
+
+        selectedPlayer = {
+            playerId: playerButton.dataset.playerId,
+            playerName: playerButton.dataset.playerName,
+            playerPosition: playerButton.dataset.playerPosition
+        };
+
+        playerButton.classList.add("selected-player");
+    }
+
+    function selectLineupSlot(slotButton) {
+        const existingPlayerId = slotButton.dataset.playerId;
+
+        if (!selectedPlayer && existingPlayerId) {
+            removePlayerFromSlot(slotButton);
+            return;
+        }
+
+        if (!selectedPlayer) {
+            slotButton.classList.add("selected-slot");
+
+            setTimeout(function () {
+                slotButton.classList.remove("selected-slot");
+            }, 400);
+
+            return;
+        }
+
+        removePlayerFromOtherSlot(selectedPlayer.playerId);
+
+        slotButton.dataset.playerId = selectedPlayer.playerId;
+        slotButton.dataset.playerName = selectedPlayer.playerName;
+        slotButton.dataset.playerPosition =
+            selectedPlayer.playerPosition;
+
+        slotButton.classList.add("filled-slot");
+
+        slotButton.querySelector(".slot-content").innerHTML =
+            '<span class="slot-player-name">' +
+            escapeHtml(selectedPlayer.playerName) +
+            '</span>' +
+            '<span class="slot-position">' +
+            escapeHtml(slotButton.dataset.position) +
+            '</span>';
+
+        updatePlayerButtonState(selectedPlayer.playerId, true);
+
+        selectedPlayer = null;
+
+        document.querySelectorAll(
+            ".available-player"
+        ).forEach(function (button) {
+            button.classList.remove("selected-player");
+        });
+
+        rebuildHiddenInputs();
+    }
+
+    function removePlayerFromOtherSlot(playerId) {
+        const lineupSlots = document.querySelectorAll(
+            ".lineup-slot"
+        );
+
+        lineupSlots.forEach(function (slot) {
+            if (slot.dataset.playerId === playerId) {
+                resetSlot(slot);
+            }
+        });
+    }
+
+    function removePlayerFromSlot(slotButton) {
+        const playerId = slotButton.dataset.playerId;
+
+        resetSlot(slotButton);
+        updatePlayerButtonState(playerId, false);
+        rebuildHiddenInputs();
+    }
+
+    function resetSlot(slotButton) {
+        slotButton.dataset.playerId = "";
+        slotButton.dataset.playerName = "";
+        slotButton.dataset.playerPosition = "";
+
+        slotButton.classList.remove(
+            "filled-slot",
+            "selected-slot"
+        );
+
+        slotButton.querySelector(".slot-content").textContent =
+            slotButton.dataset.position;
+    }
+
+    function updatePlayerButtonState(playerId, assigned) {
+        const playerButtons = document.querySelectorAll(
+            ".available-player"
+        );
+
+        playerButtons.forEach(function (button) {
+            if (button.dataset.playerId === playerId) {
+                button.classList.toggle(
+                    "assigned-player",
+                    assigned
+                );
+            }
+        });
+    }
+
+    function rebuildHiddenInputs() {
+        const hiddenInputContainer = document.getElementById(
+            "lineupHiddenInputs"
+        );
+
+        hiddenInputContainer.innerHTML = "";
+
+        const lineupSlots = document.querySelectorAll(
+            ".lineup-slot"
+        );
+
+        lineupSlots.forEach(function (slot) {
+            if (!slot.dataset.playerId) {
+                return;
+            }
+
+            const hiddenInput = document.createElement("input");
+
+            hiddenInput.type = "hidden";
+            hiddenInput.name = "lineup_" + slot.dataset.slot;
+            hiddenInput.value = slot.dataset.playerId;
+
+            hiddenInputContainer.appendChild(hiddenInput);
+        });
+    }
+
+    function clearLineup() {
+        const lineupSlots = document.querySelectorAll(
+            ".lineup-slot"
+        );
+
+        lineupSlots.forEach(function (slot) {
+            resetSlot(slot);
+        });
+
+        const playerButtons = document.querySelectorAll(
+            ".available-player"
+        );
+
+        playerButtons.forEach(function (button) {
+            button.classList.remove(
+                "assigned-player",
+                "selected-player"
+            );
+        });
+
+        selectedPlayer = null;
+        rebuildHiddenInputs();
+    }
+
+    function escapeHtml(value) {
+        const temporaryElement =
+            document.createElement("div");
+
+        temporaryElement.textContent = value;
+
+        return temporaryElement.innerHTML;
+    }
+</script>
+
+</body>
+</html>
