@@ -768,15 +768,109 @@ def teams():
         "3-5-2"
     }
 
+    allowed_slots = {
+        "forward_left",
+        "forward_right",
+        "midfield_left",
+        "midfield_centre",
+        "midfield_right",
+        "defence_left",
+        "defence_right",
+        "goalkeeper"
+    }
+
     if selected_formation not in allowed_formations:
         selected_formation = "4-3-3"
 
     connection = get_database_connection()
 
-    # Save is only a temporary confirmation for now.
-    # Database storage for line-ups will be added next.
+    # Save the selected line-up
     if request.method == "POST":
 
+        if not selected_age_group:
+            connection.close()
+
+            return redirect(
+                url_for(
+                    "teams",
+                    formation=selected_formation
+                )
+            )
+
+        # Remove the old saved line-up for this
+        # age group and formation.
+        connection.execute("""
+            DELETE FROM team_lineups
+            WHERE age_group = ?
+              AND formation = ?
+        """, (
+            selected_age_group,
+            selected_formation
+        ))
+
+        used_player_ids = set()
+
+        for slot_name in allowed_slots:
+
+            player_id_value = request.form.get(
+                f"lineup_{slot_name}",
+                ""
+            ).strip()
+
+            if not player_id_value.isdigit():
+                continue
+
+            player_id = int(player_id_value)
+
+            # Prevent the same player from being
+            # placed into more than one slot.
+            if player_id in used_player_ids:
+                continue
+
+            # Check that the player is active and
+            # belongs to the selected age group.
+            player = connection.execute("""
+                SELECT player_id
+                FROM players
+                WHERE player_id = ?
+                  AND age_group = ?
+                  AND registration_status = 'Active'
+            """, (
+                player_id,
+                selected_age_group
+            )).fetchone()
+
+            if not player:
+                continue
+
+            connection.execute("""
+                INSERT INTO team_lineups (
+                    age_group,
+                    formation,
+                    slot_name,
+                    player_id,
+                    saved_by_user_id,
+                    updated_at
+                )
+                VALUES (
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    CURRENT_TIMESTAMP
+                )
+            """, (
+                selected_age_group,
+                selected_formation,
+                slot_name,
+                player_id,
+                session.get("user_id")
+            ))
+
+            used_player_ids.add(player_id)
+
+        connection.commit()
         connection.close()
 
         return redirect(
@@ -799,10 +893,12 @@ def teams():
     """).fetchall()
 
     # Do not display players until an age group
-    # has been selected
+    # has been selected.
     team_players = []
+    saved_lineup = {}
 
     if selected_age_group:
+
         team_players = connection.execute("""
             SELECT
                 player_id,
@@ -824,6 +920,42 @@ def teams():
             selected_age_group,
         )).fetchall()
 
+        saved_records = connection.execute("""
+            SELECT
+                team_lineups.slot_name,
+                players.player_id,
+                players.first_name,
+                players.last_name,
+                players.position
+
+            FROM team_lineups
+
+            JOIN players
+                ON team_lineups.player_id =
+                    players.player_id
+
+            WHERE team_lineups.age_group = ?
+              AND team_lineups.formation = ?
+              AND players.registration_status = 'Active'
+
+            ORDER BY team_lineups.slot_name
+        """, (
+            selected_age_group,
+            selected_formation
+        )).fetchall()
+
+        # Convert the saved rows into a dictionary
+        # that teams.html can use by slot name.
+        for record in saved_records:
+            saved_lineup[record["slot_name"]] = {
+                "player_id": record["player_id"],
+                "player_name": (
+                    f"{record['first_name']} "
+                    f"{record['last_name']}"
+                ),
+                "position": record["position"]
+            }
+
     connection.close()
 
     return render_template(
@@ -832,6 +964,7 @@ def teams():
         selected_age_group=selected_age_group,
         selected_formation=selected_formation,
         players=team_players,
+        saved_lineup=saved_lineup,
         saved=request.args.get("saved") == "1"
     )
 
