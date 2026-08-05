@@ -768,19 +768,57 @@ def teams():
         "3-5-2"
     }
 
-    allowed_slots = {
-        "forward_left",
-        "forward_right",
-        "midfield_left",
-        "midfield_centre",
-        "midfield_right",
-        "defence_left",
-        "defence_right",
-        "goalkeeper"
+    # Each formation uses exactly 11 pitch positions.
+    formation_slots = {
+        "4-3-3": {
+            "forward_left",
+            "forward_centre",
+            "forward_right",
+            "midfield_left",
+            "midfield_centre",
+            "midfield_right",
+            "defence_left",
+            "defence_centre_left",
+            "defence_centre_right",
+            "defence_right",
+            "goalkeeper"
+        },
+
+        "4-4-2": {
+            "forward_left",
+            "forward_right",
+            "midfield_left",
+            "midfield_centre_left",
+            "midfield_centre_right",
+            "midfield_right",
+            "defence_left",
+            "defence_centre_left",
+            "defence_centre_right",
+            "defence_right",
+            "goalkeeper"
+        },
+
+        "3-5-2": {
+            "forward_left",
+            "forward_right",
+            "midfield_left",
+            "midfield_centre_left",
+            "midfield_centre",
+            "midfield_centre_right",
+            "midfield_right",
+            "defence_left",
+            "defence_centre",
+            "defence_right",
+            "goalkeeper"
+        }
     }
 
     if selected_formation not in allowed_formations:
         selected_formation = "4-3-3"
+
+    # Only accept position names that belong to
+    # the currently selected formation.
+    allowed_slots = formation_slots[selected_formation]
 
     connection = get_database_connection()
 

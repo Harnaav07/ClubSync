@@ -159,8 +159,8 @@
         </form>
 
         <p class="team-help-message">
-            Select a player, then select a position on the pitch.
-            Select a filled position again to remove that player.
+            Drag or select a player, then place them into one of the
+            11 positions. Changing the formation updates the pitch layout.
         </p>
 
         <form
@@ -248,29 +248,75 @@
                         <div class="halfway-line"></div>
                         <div class="centre-circle"></div>
                         <div class="centre-dot"></div>
+                        {# Each formation contains exactly 11 player positions. #}
+                        {% if selected_formation == "4-4-2" %}
 
-                        {% set slots = [
-                            ("forward_left", "FWD", "slot-forward-left"),
-                            ("forward_right", "FWD", "slot-forward-right"),
-                            ("midfield_left", "MID", "slot-midfield-left"),
-                            ("midfield_centre", "MID", "slot-midfield-centre"),
-                            ("midfield_right", "MID", "slot-midfield-right"),
+                            {% set slots = [
+                                ("forward_left", "FWD", 18, 35),
+                                ("forward_right", "FWD", 18, 65),
 
-                            ("defence_left", "DEF", "slot-defence-left"),
+                                ("midfield_left", "MID", 45, 15),
+                                ("midfield_centre_left", "MID", 45, 38),
+                                ("midfield_centre_right", "MID", 45, 62),
+                                ("midfield_right", "MID", 45, 85),
 
-                            ("defence_right", "DEF", "slot-defence-right"),
-                            ("goalkeeper", "GK", "slot-goalkeeper")
-                        ] %}
+                                ("defence_left", "DEF", 72, 15),
+                                ("defence_centre_left", "DEF", 72, 38),
+                                ("defence_centre_right", "DEF", 72, 62),
+                                ("defence_right", "DEF", 72, 85),
 
-                        {% for slot_name, slot_position, slot_class in slots %}
+                                ("goalkeeper", "GK", 85, 50)
+                            ] %}
+
+                        {% elif selected_formation == "3-5-2" %}
+
+                            {% set slots = [
+                                ("forward_left", "FWD", 18, 35),
+                                ("forward_right", "FWD", 18, 65),
+
+                                ("midfield_left", "MID", 45, 10),
+                                ("midfield_centre_left", "MID", 45, 30),
+                                ("midfield_centre", "MID", 45, 50),
+                                ("midfield_centre_right", "MID", 45, 70),
+                                ("midfield_right", "MID", 45, 90),
+
+                                ("defence_left", "DEF", 72, 25),
+                                ("defence_centre", "DEF", 72, 50),
+                                ("defence_right", "DEF", 72, 75),
+
+                                ("goalkeeper", "GK", 82, 50)
+                            ] %}
+
+                        {% else %}
+
+                            {% set slots = [
+                                ("forward_left", "FWD", 18, 22),
+                                ("forward_centre", "FWD", 18, 50),
+                                ("forward_right", "FWD", 18, 78),
+
+                                ("midfield_left", "MID", 45, 25),
+                                ("midfield_centre", "MID", 45, 50),
+                                ("midfield_right", "MID", 45, 75),
+
+                                ("defence_left", "DEF", 72, 15),
+                                ("defence_centre_left", "DEF", 72, 38),
+                                ("defence_centre_right", "DEF", 72, 62),
+                                ("defence_right", "DEF", 72, 85),
+
+                                ("goalkeeper", "GK", 90, 50)
+                            ] %}
+
+                        {% endif %}
+{% for slot_name, slot_position, slot_top, slot_left in slots %}
                             {% set saved_player = saved_lineup.get(slot_name) %}
 
                             <button
                                 type="button"
-                                class="lineup-slot {{ slot_class }}
+                                class="lineup-slot
                                 {% if saved_player %}
                                     filled-slot
                                 {% endif %}"
+                                style="top: {{ slot_top }}%; left: {{ slot_left }}%;"
                                 data-slot="{{ slot_name }}"
                                 data-position="{{ slot_position }}"
                                 data-player-id="{{ saved_player['player_id'] if saved_player else '' }}"
