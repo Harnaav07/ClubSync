@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>ClubSync Fee Management</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+
+<div class="app-layout">
+
+    <!-- Navigation sidebar -->
+    <aside class="sidebar">
+
+        <h1>ClubSync</h1>
+
+        <nav>
+
+            <a href="{{ url_for('dashboard') }}">
+                Dashboard
+            </a>
+
+            <a href="{{ url_for('players') }}">
+                Players
+            </a>
+
+            <a href="{{ url_for('attendance') }}">
+                Attendance
+            </a>
+
+            <a href="{{ url_for('teams') }}">
+                Teams
+            </a>
+
+            <a
+                class="active"
+                href="{{ url_for('fees') }}"
+            >
+                Fees
+            </a>
+
+            <a href="#">
+                Assets
+            </a>
+
+            <a href="{{ url_for('logout') }}">
+                Logout
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- Main fees content -->
+    <main class="main-content fees-page">
+
+        <!-- Page heading -->
+        <div class="top-bar">
+
+            <div>
+                <h2>Fee Management</h2>
+            </div>
+
+            <div class="user-box">
+                {{ session["role"] }}
+            </div>
+
+        </div>
+
+
+        <!-- Success message -->
+        {% if saved %}
+
+            <div class="fees-success-message">
+                Payment record was saved successfully.
+            </div>
+
+        {% endif %}
+
+
+        <!-- Fee summary cards -->
+        <section class="fee-summary-grid">
+
+            <div class="fee-summary-card paid-summary-card">
+
+                <h3>Paid</h3>
+
+                <p class="fee-summary-count">
+                    {{ paid_count }} Players
+                </p>
+
+                <p class="fee-summary-amount">
+                    ${{ "%.2f"|format(paid_total) }}
+                </p>
+
+            </div>
+
+
+            <div class="fee-summary-card part-payment-summary-card">
+
+                <h3>Part Payment</h3>
+
+                <p class="fee-summary-count">
+                    {{ part_payment_count }} Players
+                </p>
+
+                <p class="fee-summary-amount">
+                    ${{ "%.2f"|format(part_payment_total) }}
+                </p>
+
+            </div>
+
+
+            <div class="fee-summary-card overdue-summary-card">
+
+                <h3>Overdue</h3>
+
+                <p class="fee-summary-count">
+                    {{ overdue_count }} Players
+                </p>
+
+                <p class="fee-summary-amount">
+                    ${{ "%.2f"|format(overdue_total) }}
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- Search and filter controls -->
+        <section class="fees-filter-card">
+
+            <form
+                method="GET"
+                action="{{ url_for('fees') }}"
+                class="fees-filter-form"
+            >
+
+                <div class="fees-filter-field fees-search-field">
+
+                    <label for="search">
+                        Search Fees
+                    </label>
+
+                    <input
+                        id="search"
+                        type="text"
+                        name="search"
+                        value="{{ search }}"
+                        placeholder="Player"
+                    >
+
+                </div>
+
+
+                <div class="fees-filter-field">
+
+                    <label for="status">
+                        Status
+                    </label>
+
+                    <select
+                        id="status"
+                        name="status"
+                    >
+
+                        <option value="">
+                            All
+                        </option>
+
+                        <option
+                            value="Paid"
+                            {% if selected_status == "Paid" %}
+                                selected
+                            {% endif %}
+                        >
+                            Paid
+                        </option>
+
+                        <option
+                            value="Part Payment"
+                            {% if selected_status == "Part Payment" %}
+                                selected
+                            {% endif %}
+                        >
+                            Part Payment
+                        </option>
+
+                        <option
+                            value="Overdue"
+                            {% if selected_status == "Overdue" %}
+                                selected
+                            {% endif %}
+                        >
+                            Overdue
+                        </option>
+
+                        <option
+                            value="Unpaid"
+                            {% if selected_status == "Unpaid" %}
+                                selected
+                            {% endif %}
+                        >
+                            Unpaid
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="fees-filter-field">
+
+                    <label for="age_group">
+                        Age Group
+                    </label>
+
+                    <select
+                        id="age_group"
+                        name="age_group"
+                    >
+
+                        <option value="">
+                            All
+                        </option>
+
+                        {% for age_group_record in age_groups %}
+
+                            <option
+                                value="{{ age_group_record['age_group'] }}"
+                                {% if selected_age_group == age_group_record['age_group'] %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ age_group_record["age_group"] }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="fees-filter-field">
+
+                    <label for="season">
+                        Season
+                    </label>
+
+                    <select
+                        id="season"
+                        name="season"
+                    >
+
+                        {% for season_option in seasons %}
+
+                            <option
+                                value="{{ season_option }}"
+                                {% if selected_season|string == season_option|string %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ season_option }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="fees-filter-actions">
+
+                    <button
+                        type="submit"
+                        class="fees-search-button"
+                    >
+                        Search
+                    </button>
+
+                    <a
+                        href="{{ url_for('fees') }}"
+                        class="fees-clear-button"
+                    >
+                        Clear
+                    </a>
+
+                </div>
+
+            </form>
+
+
+            {% if session["role"] == "Admin" %}
+
+                <button
+                    type="button"
+                    class="record-payment-button"
+                    onclick="openPaymentModal()"
+                >
+                    Record Payment
+                </button>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- Fees table -->
+        <section class="fees-table-card">
+
+            <div class="fees-table-wrapper">
+
+                <table class="fees-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>Player</th>
+                            <th>Age Group</th>
+                            <th>Amount Due</th>
+                            <th>Amount Paid</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for fee in fees %}
+
+                            <tr>
+
+                                <td>
+                                    {{ fee["first_name"] }}
+                                    {{ fee["last_name"] }}
+                                </td>
+
+                                <td>
+                                    {{ fee["age_group"] }}
+                                </td>
+
+                                <td>
+                                    ${{ "%.2f"|format(fee["amount_due"]) }}
+                                </td>
+
+                                <td>
+                                    ${{ "%.2f"|format(fee["amount_paid"]) }}
+                                </td>
+
+                                <td>
+
+                                    <span
+                                        class="fee-status
+                                        {% if fee['payment_status'] == 'Paid' %}
+                                            paid-fee-status
+                                        {% elif fee['payment_status'] == 'Part Payment' %}
+                                            part-payment-fee-status
+                                        {% elif fee['payment_status'] == 'Overdue' %}
+                                            overdue-fee-status
+                                        {% else %}
+                                            unpaid-fee-status
+                                        {% endif %}"
+                                    >
+                                        {{ fee["payment_status"] }}
+                                    </span>
+
+                                </td>
+
+                                <td>
+
+                                    {% if session["role"] == "Admin" %}
+
+                                        {% if fee["payment_status"] == "Paid" %}
+
+                                            <button
+                                                type="button"
+                                                class="fee-action-button"
+                                                onclick="openViewFeeModal(
+                                                    '{{ fee['fee_id'] }}',
+                                                    '{{ fee['first_name']|e }} {{ fee['last_name']|e }}',
+                                                    '{{ fee['age_group']|e }}',
+                                                    '{{ fee['season'] }}',
+                                                    '{{ fee['amount_due'] }}',
+                                                    '{{ fee['amount_paid'] }}',
+                                                    '{{ fee['payment_status'] }}',
+                                                    '{{ fee['due_date'] or '' }}',
+                                                    '{{ fee['notes']|default('', true)|e }}'
+                                                )"
+                                            >
+                                                View
+                                            </button>
+
+                                        {% else %}
+
+                                            <button
+                                                type="button"
+                                                class="fee-action-button"
+                                                onclick="openUpdatePaymentModal(
+                                                    '{{ fee['fee_id'] }}',
+                                                    '{{ fee['first_name']|e }} {{ fee['last_name']|e }}',
+                                                    '{{ fee['amount_due'] }}',
+                                                    '{{ fee['amount_paid'] }}'
+                                                )"
+                                            >
+                                                {% if fee["amount_paid"] > 0 %}
+                                                    Add Payment
+                                                {% else %}
+                                                    Mark Payment
+                                                {% endif %}
+                                            </button>
+
+                                        {% endif %}
+
+                                    {% else %}
+
+                                        <button
+                                            type="button"
+                                            class="fee-action-button"
+                                            onclick="openViewFeeModal(
+                                                '{{ fee['fee_id'] }}',
+                                                '{{ fee['first_name']|e }} {{ fee['last_name']|e }}',
+                                                '{{ fee['age_group']|e }}',
+                                                '{{ fee['season'] }}',
+                                                '{{ fee['amount_due'] }}',
+                                                '{{ fee['amount_paid'] }}',
+                                                '{{ fee['payment_status'] }}',
+                                                '{{ fee['due_date'] or '' }}',
+                                                '{{ fee['notes']|default('', true)|e }}'
+                                            )"
+                                        >
+                                            View
+                                        </button>
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+
+                        {% else %}
+
+                            <tr>
+
+                                <td
+                                    colspan="6"
+                                    class="fees-empty-state"
+                                >
+                                    No fee records were found.
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+{% if session["role"] == "Admin" %}
+
+<!-- Record payment modal -->
+<div
+    id="paymentModal"
+    class="fee-modal"
+>
+
+    <div class="fee-modal-content">
+
+        <button
+            type="button"
+            class="fee-modal-close"
+            onclick="closePaymentModal()"
+        >
+            &times;
+        </button>
+
+        <h2>Record Payment</h2>
+
+        <form
+            method="POST"
+            action="{{ url_for('add_fee') }}"
+            class="fee-payment-form"
+        >
+
+            <div class="fee-form-grid">
+
+                <div class="fee-form-field fee-full-width-field">
+
+                    <label for="paymentPlayer">
+                        Player
+                    </label>
+
+                    <select
+                        id="paymentPlayer"
+                        name="player_id"
+                        required
+                    >
+
+                        <option value="">
+                            Select Player
+                        </option>
+
+                        {% for player in players %}
+
+                            <option value="{{ player['player_id'] }}">
+                                {{ player["first_name"] }}
+                                {{ player["last_name"] }}
+                                — {{ player["age_group"] }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="fee-form-field">
+
+                    <label for="paymentSeason">
+                        Season
+                    </label>
+
+                    <select
+                        id="paymentSeason"
+                        name="season"
+                        required
+                    >
+
+                        {% for season_option in seasons %}
+
+                            <option
+                                value="{{ season_option }}"
+                                {% if selected_season|string == season_option|string %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ season_option }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="fee-form-field">
+
+                    <label for="amountDue">
+                        Amount Due
+                    </label>
+
+                    <input
+                        id="amountDue"
+                        type="number"
+                        name="amount_due"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="fee-form-field">
+
+                    <label for="amountPaid">
+                        Amount Paid
+                    </label>
+
+                    <input
+                        id="amountPaid"
+                        type="number"
+                        name="amount_paid"
+                        min="0"
+                        step="0.01"
+                        value="0.00"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="fee-form-field">
+
+                    <label for="dueDate">
+                        Due Date
+                    </label>
+
+                    <input
+                        id="dueDate"
+                        type="date"
+                        name="due_date"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="fee-form-field fee-full-width-field">
+
+                    <label for="paymentNotes">
+                        Notes
+                    </label>
+
+                    <textarea
+                        id="paymentNotes"
+                        name="notes"
+                        maxlength="300"
+                        placeholder="Optional payment notes"
+                    ></textarea>
+
+                </div>
+
+            </div>
+
+            <button
+                type="submit"
+                class="save-fee-button"
+            >
+                Save Fee Record
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- Add payment modal -->
+<div
+    id="updatePaymentModal"
+    class="fee-modal"
+>
+
+    <div class="fee-modal-content">
+
+        <button
+            type="button"
+            class="fee-modal-close"
+            onclick="closeUpdatePaymentModal()"
+        >
+            &times;
+        </button>
+
+        <h2>Add Payment</h2>
+
+        <p
+            id="updatePaymentPlayerName"
+            class="fee-modal-player-name"
+        ></p>
+
+        <form
+            id="updatePaymentForm"
+            method="POST"
+            class="fee-payment-form"
+        >
+
+            <div class="fee-payment-summary">
+
+                <div>
+                    <span>Amount Due</span>
+
+                    <strong id="updateAmountDue">
+                        $0.00
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Already Paid</span>
+
+                    <strong id="updateAmountPaid">
+                        $0.00
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Remaining</span>
+
+                    <strong id="updateAmountRemaining">
+                        $0.00
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <div class="fee-form-field">
+
+                <label for="newPaymentAmount">
+                    New Payment Amount
+                </label>
+
+                <input
+                    id="newPaymentAmount"
+                    type="number"
+                    name="payment_amount"
+                    min="0.01"
+                    step="0.01"
+                    required
+                >
+
+            </div>
+
+
+            <div class="fee-form-field">
+
+                <label for="newPaymentNotes">
+                    Notes
+                </label>
+
+                <textarea
+                    id="newPaymentNotes"
+                    name="notes"
+                    maxlength="300"
+                    placeholder="Optional payment notes"
+                ></textarea>
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="save-fee-button"
+            >
+                Save Payment
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endif %}
+
+
+<!-- View fee modal -->
+<div
+    id="viewFeeModal"
+    class="fee-modal"
+>
+
+    <div class="fee-modal-content">
+
+        <button
+            type="button"
+            class="fee-modal-close"
+            onclick="closeViewFeeModal()"
+        >
+            &times;
+        </button>
+
+        <h2>Fee Details</h2>
+
+        <div class="fee-view-grid">
+
+            <div>
+                <span>Player</span>
+                <strong id="viewFeePlayer"></strong>
+            </div>
+
+            <div>
+                <span>Age Group</span>
+                <strong id="viewFeeAgeGroup"></strong>
+            </div>
+
+            <div>
+                <span>Season</span>
+                <strong id="viewFeeSeason"></strong>
+            </div>
+
+            <div>
+                <span>Amount Due</span>
+                <strong id="viewFeeAmountDue"></strong>
+            </div>
+
+            <div>
+                <span>Amount Paid</span>
+                <strong id="viewFeeAmountPaid"></strong>
+            </div>
+
+            <div>
+                <span>Status</span>
+                <strong id="viewFeeStatus"></strong>
+            </div>
+
+            <div>
+                <span>Due Date</span>
+                <strong id="viewFeeDueDate"></strong>
+            </div>
+
+            <div class="fee-full-width-field">
+                <span>Notes</span>
+                <strong id="viewFeeNotes"></strong>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+    function openPaymentModal() {
+        const modal = document.getElementById(
+            "paymentModal"
+        );
+
+        if (modal) {
+            modal.style.display = "flex";
+        }
+    }
+
+
+    function closePaymentModal() {
+        const modal = document.getElementById(
+            "paymentModal"
+        );
+
+        if (modal) {
+            modal.style.display = "none";
+        }
+    }
+
+
+    function openUpdatePaymentModal(
+        feeId,
+        playerName,
+        amountDue,
+        amountPaid
+    ) {
+        const due = Number(amountDue);
+        const paid = Number(amountPaid);
+        const remaining = Math.max(due - paid, 0);
+
+        document.getElementById(
+            "updatePaymentPlayerName"
+        ).textContent = playerName;
+
+        document.getElementById(
+            "updateAmountDue"
+        ).textContent = "$" + due.toFixed(2);
+
+        document.getElementById(
+            "updateAmountPaid"
+        ).textContent = "$" + paid.toFixed(2);
+
+        document.getElementById(
+            "updateAmountRemaining"
+        ).textContent = "$" + remaining.toFixed(2);
+
+        const paymentInput = document.getElementById(
+            "newPaymentAmount"
+        );
+
+        paymentInput.value = "";
+        paymentInput.max = remaining.toFixed(2);
+
+        const form = document.getElementById(
+            "updatePaymentForm"
+        );
+
+        form.action = "/fees/payment/" + feeId;
+
+        document.getElementById(
+            "updatePaymentModal"
+        ).style.display = "flex";
+    }
+
+
+    function closeUpdatePaymentModal() {
+        const modal = document.getElementById(
+            "updatePaymentModal"
+        );
+
+        if (modal) {
+            modal.style.display = "none";
+        }
+    }
+
+
+    function openViewFeeModal(
+        feeId,
+        playerName,
+        ageGroup,
+        season,
+        amountDue,
+        amountPaid,
+        paymentStatus,
+        dueDate,
+        notes
+    ) {
+        document.getElementById(
+            "viewFeePlayer"
+        ).textContent = playerName;
+
+        document.getElementById(
+            "viewFeeAgeGroup"
+        ).textContent = ageGroup;
+
+        document.getElementById(
+            "viewFeeSeason"
+        ).textContent = season;
+
+        document.getElementById(
+            "viewFeeAmountDue"
+        ).textContent =
+            "$" + Number(amountDue).toFixed(2);
+
+        document.getElementById(
+            "viewFeeAmountPaid"
+        ).textContent =
+            "$" + Number(amountPaid).toFixed(2);
+
+        document.getElementById(
+            "viewFeeStatus"
+        ).textContent = paymentStatus;
+
+        document.getElementById(
+            "viewFeeDueDate"
+        ).textContent = dueDate || "Not provided";
+
+        document.getElementById(
+            "viewFeeNotes"
+        ).textContent = notes || "No notes";
+
+        document.getElementById(
+            "viewFeeModal"
+        ).style.display = "flex";
+    }
+
+
+    function closeViewFeeModal() {
+        document.getElementById(
+            "viewFeeModal"
+        ).style.display = "none";
+    }
+
+
+    window.addEventListener(
+        "click",
+        function (event) {
+            const modals = document.querySelectorAll(
+                ".fee-modal"
+            );
+
+            modals.forEach(function (modal) {
+                if (event.target === modal) {
+                    modal.style.display = "none";
+                }
+            });
+        }
+    );
+
+
+    window.addEventListener(
+        "keydown",
+        function (event) {
+            if (event.key === "Escape") {
+                document.querySelectorAll(
+                    ".fee-modal"
+                ).forEach(function (modal) {
+                    modal.style.display = "none";
+                });
+            }
+        }
+    );
+</script>
+
+</body>
+
+</html>

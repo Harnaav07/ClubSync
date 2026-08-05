@@ -24,6 +24,13 @@ cursor.execute("""
         email TEXT NOT NULL UNIQUE,
         password_hash TEXT NOT NULL,
         role TEXT NOT NULL
+            CHECK (
+                role IN (
+                    'Admin',
+                    'Coach',
+                    'Viewer'
+                )
+            )
     )
 """)
 
@@ -81,10 +88,10 @@ for user in users:
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS dashboard_stats (
         stat_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        total_players INTEGER NOT NULL,
-        attendance_records INTEGER NOT NULL,
-        overdue_fees INTEGER NOT NULL,
-        club_assets INTEGER NOT NULL
+        total_players INTEGER NOT NULL DEFAULT 0,
+        attendance_records INTEGER NOT NULL DEFAULT 0,
+        overdue_fees INTEGER NOT NULL DEFAULT 0,
+        club_assets INTEGER NOT NULL DEFAULT 0
     )
 """)
 
@@ -125,7 +132,14 @@ cursor.execute("""
         contact_phone TEXT,
         emergency_contact TEXT,
         medical_notes TEXT,
-        registration_status TEXT NOT NULL DEFAULT 'Active'
+        registration_status TEXT NOT NULL
+            DEFAULT 'Active'
+            CHECK (
+                registration_status IN (
+                    'Active',
+                    'Inactive'
+                )
+            )
     )
 """)
 
@@ -167,10 +181,10 @@ cursor.execute("""
 
 cursor.execute("PRAGMA table_info(attendance)")
 
-attendance_columns = [
+attendance_columns = {
     column[1]
     for column in cursor.fetchall()
-]
+}
 
 if "attendance_note" not in attendance_columns:
     cursor.execute("""
@@ -204,7 +218,8 @@ cursor.execute("""
         slot_name TEXT NOT NULL,
         player_id INTEGER NOT NULL,
         saved_by_user_id INTEGER,
-        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL
+            DEFAULT CURRENT_TIMESTAMP,
 
         UNIQUE (
             age_group,
@@ -226,6 +241,185 @@ cursor.execute("""
             REFERENCES users(user_id)
             ON DELETE SET NULL
     )
+""")
+
+
+# Fees Table
+# Stores one fee record for each player
+# during each season.
+
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS fees (
+        fee_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        player_id INTEGER NOT NULL,
+        season INTEGER NOT NULL,
+        amount_due REAL NOT NULL
+            DEFAULT 0
+            CHECK (amount_due >= 0),
+        amount_paid REAL NOT NULL
+            DEFAULT 0
+            CHECK (amount_paid >= 0),
+        payment_status TEXT NOT NULL
+            DEFAULT 'Unpaid'
+            CHECK (
+                payment_status IN (
+                    'Paid',
+                    'Part Payment',
+                    'Overdue',
+                    'Unpaid'
+                )
+            ),
+        due_date TEXT,
+        payment_date TEXT,
+        notes TEXT,
+        created_at TEXT NOT NULL
+            DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL
+            DEFAULT CURRENT_TIMESTAMP,
+
+        UNIQUE (
+            player_id,
+            season
+        ),
+
+        FOREIGN KEY (player_id)
+            REFERENCES players(player_id)
+            ON DELETE CASCADE
+    )
+""")
+
+
+# Add newer fee fields to an older copy
+# of the database when needed.
+
+cursor.execute("PRAGMA table_info(fees)")
+
+fee_columns = {
+    column[1]
+    for column in cursor.fetchall()
+}
+
+
+if "season" not in fee_columns:
+    cursor.execute("""
+        ALTER TABLE fees
+        ADD COLUMN season INTEGER NOT NULL DEFAULT 2026
+    """)
+
+
+if "amount_due" not in fee_columns:
+    cursor.execute("""
+        ALTER TABLE fees
+        ADD COLUMN amount_due REAL NOT NULL DEFAULT 0
+    """)
+
+
+if "amount_paid" not in fee_columns:
+    cursor.execute("""
+        ALTER TABLE fees
+        ADD COLUMN amount_paid REAL NOT NULL DEFAULT 0
+    """)
+
+
+if "payment_status" not in fee_columns:
+    cursor.execute("""
+        ALTER TABLE fees
+        ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'Unpaid'
+    """)
+
+
+if "due_date" not in fee_columns:
+    cursor.execute("""
+        ALTER TABLE fees
+        ADD COLUMN due_date TEXT
+    """)
+
+
+if "payment_date" not in fee_columns:
+    cursor.execute("""
+        ALTER TABLE fees
+        ADD COLUMN payment_date TEXT
+    """)
+
+
+if "notes" not in fee_columns:
+    cursor.execute("""
+        ALTER TABLE fees
+        ADD COLUMN notes TEXT
+    """)
+
+
+if "created_at" not in fee_columns:
+    cursor.execute("""
+        ALTER TABLE fees
+        ADD COLUMN created_at TEXT
+    """)
+
+    cursor.execute("""
+        UPDATE fees
+        SET created_at = CURRENT_TIMESTAMP
+        WHERE created_at IS NULL
+    """)
+
+
+if "updated_at" not in fee_columns:
+    cursor.execute("""
+        ALTER TABLE fees
+        ADD COLUMN updated_at TEXT
+    """)
+
+    cursor.execute("""
+        UPDATE fees
+        SET updated_at = CURRENT_TIMESTAMP
+        WHERE updated_at IS NULL
+    """)
+
+
+# Database Indexes
+# Improve searching and filtering performance.
+
+cursor.execute("""
+    CREATE INDEX IF NOT EXISTS
+        index_players_age_group
+    ON players(age_group)
+""")
+
+
+cursor.execute("""
+    CREATE INDEX IF NOT EXISTS
+        index_attendance_date
+    ON attendance(attendance_date)
+""")
+
+
+cursor.execute("""
+    CREATE INDEX IF NOT EXISTS
+        index_team_lineups
+    ON team_lineups(
+        age_group,
+        formation
+    )
+""")
+
+
+cursor.execute("""
+    CREATE INDEX IF NOT EXISTS
+        index_fees_season
+    ON fees(season)
+""")
+
+
+cursor.execute("""
+    CREATE INDEX IF NOT EXISTS
+        index_fees_status
+    ON fees(payment_status)
+""")
+
+
+cursor.execute("""
+    CREATE INDEX IF NOT EXISTS
+        index_fees_player
+    ON fees(player_id)
 """)
 
 

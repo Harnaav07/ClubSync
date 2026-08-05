@@ -1683,3 +1683,509 @@ body {
         margin-left: 0;
     }
 }
+
+
+/* Fees management page */
+
+.fees-page {
+    min-height: 100vh;
+    background: #e9e9e9;
+}
+
+.fees-page .top-bar {
+    height: 95px;
+    margin-bottom: 28px;
+    padding: 18px 34px;
+}
+
+.fees-page .top-bar h2 {
+    font-size: 40px;
+    font-weight: 400;
+}
+
+.fees-success-message {
+    margin: 0 12px 22px;
+    padding: 14px 18px;
+    border: 1px solid #83c696;
+    border-radius: 11px;
+    background: #eaf8ef;
+    color: #166534;
+    font-weight: 700;
+}
+
+/* Fee summary cards */
+
+.fee-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 72px;
+    margin: 0 14px 34px;
+}
+
+.fee-summary-card {
+    min-height: 155px;
+    padding: 20px 24px;
+    border: 2px solid;
+    border-radius: 25px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.fee-summary-card h3 {
+    margin-bottom: 8px;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.fee-summary-count {
+    margin-bottom: 10px;
+    font-size: 36px;
+    line-height: 1.05;
+}
+
+.fee-summary-amount {
+    font-size: 18px;
+}
+
+.paid-summary-card {
+    border-color: #247236;
+    background: #bcefc3;
+}
+
+.part-payment-summary-card {
+    border-color: #c9151c;
+    background: #ff7478;
+}
+
+.overdue-summary-card {
+    border-color: #f3b600;
+    background: #ffd47a;
+}
+
+/* Fee filters */
+
+.fees-filter-card {
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+    margin: 0 6px 32px;
+    padding: 10px 18px 26px;
+    border: 2px solid #d3d3d3;
+    border-radius: 24px;
+    background: #ffffff;
+}
+
+.fees-filter-form {
+    display: grid;
+    grid-template-columns: minmax(220px, 1.55fr) minmax(150px, 0.9fr) minmax(150px, 0.85fr) minmax(135px, 0.8fr) auto;
+    flex: 1;
+    gap: 18px;
+    align-items: end;
+}
+
+.fees-filter-field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.fees-filter-field label {
+    margin: 0 0 5px 10px;
+    color: #111111;
+    font-size: 17px;
+}
+
+.fees-filter-field input,
+.fees-filter-field select {
+    width: 100%;
+    height: 70px;
+    border: 2px solid #d2d2d2;
+    border-radius: 14px;
+    padding: 0 18px;
+    background: #ffffff;
+    color: #111111;
+    font: inherit;
+    font-size: 18px;
+    text-align: center;
+    text-align-last: center;
+}
+
+.fees-filter-field input:focus,
+.fees-filter-field select:focus {
+    border-color: #1d6f91;
+    outline: 3px solid rgba(29, 111, 145, 0.14);
+}
+
+.fees-filter-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.fees-search-button,
+.fees-clear-button,
+.record-payment-button {
+    display: inline-flex;
+    min-height: 70px;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 14px;
+    padding: 0 20px;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.fees-search-button {
+    background: #073544;
+    color: #ffffff;
+}
+
+.fees-clear-button {
+    border: 2px solid #d2d2d2;
+    background: #f2f2f2;
+    color: #111111;
+}
+
+.record-payment-button {
+    min-width: 205px;
+    flex-shrink: 0;
+    background: #2f7f22;
+    color: #ffffff;
+}
+
+.fees-search-button:hover {
+    background: #1d6f91;
+}
+
+.fees-clear-button:hover {
+    background: #e3e3e3;
+}
+
+.record-payment-button:hover {
+    background: #25681b;
+}
+
+/* Fees table */
+
+.fees-table-card {
+    margin: 0 0 30px;
+    padding: 14px 18px;
+    border: 2px solid #d3d3d3;
+    border-radius: 24px;
+    background: #ffffff;
+}
+
+.fees-table-wrapper {
+    overflow-x: auto;
+}
+
+.fees-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 2px solid #c4c4c4;
+    background: #ffffff;
+}
+
+.fees-table th,
+.fees-table td {
+    padding: 19px 28px;
+    border-bottom: 2px solid #c4c4c4;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.fees-table th {
+    background: #f4f4f4;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.fees-table th:first-child,
+.fees-table td:first-child {
+    text-align: left;
+}
+
+.fees-table tbody tr:nth-child(even) {
+    background: #f3f3f3;
+}
+
+.fees-table tbody tr:hover {
+    background: #eef5f8;
+}
+
+.fees-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.fee-status {
+    font-size: 17px;
+    font-weight: 500;
+}
+
+.paid-fee-status {
+    color: #176c28;
+}
+
+.part-payment-fee-status {
+    color: #b45a15;
+}
+
+.overdue-fee-status,
+.unpaid-fee-status {
+    color: #d11a1a;
+}
+
+.fee-action-button {
+    border: none;
+    background: transparent;
+    color: #4f97c5;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.fee-action-button:hover {
+    color: #17638a;
+    text-decoration: underline;
+}
+
+.fees-empty-state {
+    padding: 42px !important;
+    color: #6b7280;
+    text-align: center !important;
+}
+
+/* Fee modals */
+
+.fee-modal {
+    position: fixed;
+    z-index: 1200;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.fee-modal-content {
+    position: relative;
+    width: min(760px, 96%);
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 24px;
+    padding: 34px;
+    background: #ffffff;
+}
+
+.fee-modal-content h2 {
+    margin-bottom: 24px;
+    color: #073544;
+    font-size: 32px;
+}
+
+.fee-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 18px;
+    border: none;
+    background: transparent;
+    font-size: 38px;
+    cursor: pointer;
+}
+
+.fee-payment-form {
+    width: 100%;
+}
+
+.fee-form-grid,
+.fee-view-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.fee-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.fee-form-field label {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.fee-form-field input,
+.fee-form-field select,
+.fee-form-field textarea {
+    width: 100%;
+    border: 2px solid #c7c7c7;
+    border-radius: 10px;
+    padding: 12px;
+    background: #ffffff;
+    font: inherit;
+    font-size: 16px;
+}
+
+.fee-form-field input,
+.fee-form-field select {
+    min-height: 48px;
+}
+
+.fee-form-field textarea {
+    min-height: 95px;
+    resize: vertical;
+}
+
+.fee-full-width-field {
+    grid-column: 1 / -1;
+}
+
+.save-fee-button {
+    width: 100%;
+    margin-top: 22px;
+    border: none;
+    border-radius: 10px;
+    padding: 15px;
+    background: #2f7f22;
+    color: #ffffff;
+    font: inherit;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.save-fee-button:hover {
+    background: #25681b;
+}
+
+.fee-modal-player-name {
+    margin: -10px 0 22px;
+    color: #4b5563;
+    font-size: 18px;
+}
+
+.fee-payment-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.fee-payment-summary div {
+    padding: 16px;
+    border: 1px solid #d8d8d8;
+    border-radius: 12px;
+    background: #f7f7f7;
+    text-align: center;
+}
+
+.fee-payment-summary span,
+.fee-view-grid span {
+    display: block;
+    margin-bottom: 6px;
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.fee-payment-summary strong {
+    font-size: 19px;
+}
+
+.fee-view-grid div {
+    padding: 15px;
+    border: 1px solid #dedede;
+    border-radius: 10px;
+    background: #f8f8f8;
+}
+
+.fee-view-grid strong {
+    color: #111111;
+    font-size: 16px;
+    overflow-wrap: anywhere;
+}
+
+/* Responsive fees layout */
+
+@media (max-width: 1250px) {
+    .fee-summary-grid {
+        gap: 28px;
+    }
+
+    .fees-filter-card {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .fees-filter-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .fees-filter-actions {
+        align-self: end;
+    }
+
+    .record-payment-button {
+        align-self: flex-end;
+    }
+}
+
+@media (max-width: 850px) {
+    .fee-summary-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .fees-filter-form {
+        grid-template-columns: 1fr;
+    }
+
+    .fees-filter-actions,
+    .record-payment-button {
+        width: 100%;
+    }
+
+    .fees-search-button,
+    .fees-clear-button {
+        flex: 1;
+    }
+
+    .fee-form-grid,
+    .fee-view-grid,
+    .fee-payment-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .fee-full-width-field {
+        grid-column: auto;
+    }
+}
+
+@media (max-width: 650px) {
+    .fees-page .top-bar {
+        height: auto;
+        min-height: 90px;
+    }
+
+    .fee-summary-grid,
+    .fees-filter-card {
+        margin-right: 0;
+        margin-left: 0;
+    }
+
+    .fees-table-card {
+        padding: 10px;
+    }
+
+    .fee-modal-content {
+        padding: 28px 20px 22px;
+    }
+}
