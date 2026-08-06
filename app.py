@@ -1749,7 +1749,7 @@ def viewer():
     if "role" not in session:
         return redirect(url_for("login"))
 
-    # Only viewers can use this page
+    # Only the viewers can use this page
     if session["role"] != "Viewer":
         return redirect(url_for("dashboard"))
 
