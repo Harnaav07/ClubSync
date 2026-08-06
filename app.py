@@ -33,7 +33,7 @@ def get_database_connection():
 
     connection = sqlite3.connect("clubsync.db")
 
-    # Access values using column names
+    # Access values using the column names
     connection.row_factory = sqlite3.Row
 
     # Turn on foreign keys
