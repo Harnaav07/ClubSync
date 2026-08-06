@@ -107,7 +107,10 @@
             </a>
 
 
-            <div class="summary-card">
+            <a
+                href="{{ url_for('fees') }}"
+                class="summary-card summary-card-link"
+            >
 
                 <h3>Overdue Fees</h3>
 
@@ -115,7 +118,7 @@
                     {{ stats["overdue_fees"] }}
                 </p>
 
-            </div>
+            </a>
 
 
             <div class="summary-card">
