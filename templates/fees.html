@@ -142,7 +142,7 @@
 
 
         <!-- Search and filter controls -->
-        <section class="fees-filter-card">
+        <section class="fees-filter-card {% if session['role'] != 'Admin' %}coach-layout{% endif %}">
 
             <form
                 method="GET"

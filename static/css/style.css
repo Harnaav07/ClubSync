@@ -2237,3 +2237,119 @@ body {
         padding: 28px 20px 22px;
     }
 }
+
+
+/* ==========================================
+   FINAL COACH FEES BUTTON LAYOUT
+   Admin layout remains unchanged.
+   ========================================== */
+
+.fees-filter-card.coach-layout {
+    display: block !important;
+    padding: 20px 24px !important;
+    overflow: hidden !important;
+}
+
+.fees-filter-card.coach-layout .fees-filter-form {
+    display: grid !important;
+    width: 100% !important;
+    max-width: 100% !important;
+
+    grid-template-columns:
+        minmax(205px, 1.55fr)
+        minmax(135px, 0.9fr)
+        minmax(135px, 0.9fr)
+        minmax(130px, 0.85fr)
+        120px !important;
+
+    grid-template-areas:
+        "player status age season actions" !important;
+
+    align-items: start !important;
+    gap: 14px !important;
+}
+
+.fees-filter-card.coach-layout .fees-search-field {
+    grid-area: player !important;
+}
+
+.fees-filter-card.coach-layout
+.fees-filter-form > .fees-filter-field:nth-of-type(2) {
+    grid-area: status !important;
+}
+
+.fees-filter-card.coach-layout
+.fees-filter-form > .fees-filter-field:nth-of-type(3) {
+    grid-area: age !important;
+}
+
+.fees-filter-card.coach-layout
+.fees-filter-form > .fees-filter-field:nth-of-type(4) {
+    grid-area: season !important;
+}
+
+.fees-filter-card.coach-layout .fees-filter-actions {
+    display: flex !important;
+    grid-area: actions !important;
+    width: 120px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    margin: 16px 0 0 !important;
+}
+
+.fees-filter-card.coach-layout .fees-search-button,
+.fees-filter-card.coach-layout .fees-clear-button {
+    width: 120px !important;
+    min-width: 120px !important;
+    height: 44px !important;
+    margin: 0 !important;
+    padding: 0 12px !important;
+    font-size: 14px !important;
+}
+
+/* Responsive Coach layout only */
+@media (max-width: 1050px) {
+    .fees-filter-card.coach-layout .fees-filter-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        grid-template-areas:
+            "player status"
+            "age season"
+            "actions actions" !important;
+    }
+
+    .fees-filter-card.coach-layout .fees-filter-actions {
+        width: auto !important;
+        flex-direction: row !important;
+        margin-top: 10px !important;
+    }
+
+    .fees-filter-card.coach-layout .fees-search-button,
+    .fees-filter-card.coach-layout .fees-clear-button {
+        width: 120px !important;
+        min-width: 120px !important;
+    }
+}
+
+@media (max-width: 650px) {
+    .fees-filter-card.coach-layout .fees-filter-form {
+        grid-template-columns: 1fr !important;
+        grid-template-areas:
+            "player"
+            "status"
+            "age"
+            "season"
+            "actions" !important;
+    }
+
+    .fees-filter-card.coach-layout .fees-filter-actions {
+        flex-direction: column !important;
+    }
+
+    .fees-filter-card.coach-layout .fees-search-button,
+    .fees-filter-card.coach-layout .fees-clear-button {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+}
