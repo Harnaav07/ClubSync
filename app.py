@@ -113,6 +113,126 @@ def update_dashboard_stats(
 
 
 
+def ensure_fees_table(connection):
+    """Create the fees table if it does not exist."""
+
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS fees (
+            fee_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            player_id INTEGER NOT NULL,
+            season INTEGER NOT NULL,
+            amount_due REAL NOT NULL
+                DEFAULT 0
+                CHECK (amount_due >= 0),
+            amount_paid REAL NOT NULL
+                DEFAULT 0
+                CHECK (amount_paid >= 0),
+            payment_status TEXT NOT NULL
+                DEFAULT 'Unpaid'
+                CHECK (
+                    payment_status IN (
+                        'Paid',
+                        'Part Payment',
+                        'Overdue',
+                        'Unpaid'
+                    )
+                ),
+            due_date TEXT,
+            payment_date TEXT,
+            notes TEXT,
+            created_at TEXT NOT NULL
+                DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL
+                DEFAULT CURRENT_TIMESTAMP,
+
+            UNIQUE (
+                player_id,
+                season
+            ),
+
+            FOREIGN KEY (player_id)
+                REFERENCES players(player_id)
+                ON DELETE CASCADE
+        )
+    """)
+
+
+def calculate_fee_status(
+    amount_due,
+    amount_paid,
+    due_date
+):
+    """Calculate the current payment status."""
+
+    if amount_due > 0 and amount_paid >= amount_due:
+        return "Paid"
+
+    if due_date:
+        try:
+            parsed_due_date = date.fromisoformat(due_date)
+
+            if parsed_due_date < date.today():
+                return "Overdue"
+
+        except ValueError:
+            pass
+
+    if amount_paid > 0:
+        return "Part Payment"
+
+    return "Unpaid"
+
+
+def refresh_fee_statuses(connection):
+    """Update stored fee statuses using current values."""
+
+    fee_records = connection.execute("""
+        SELECT
+            fee_id,
+            amount_due,
+            amount_paid,
+            due_date,
+            payment_status
+        FROM fees
+    """).fetchall()
+
+    for fee_record in fee_records:
+        current_status = calculate_fee_status(
+            float(fee_record["amount_due"]),
+            float(fee_record["amount_paid"]),
+            fee_record["due_date"]
+        )
+
+        if current_status != fee_record["payment_status"]:
+            connection.execute("""
+                UPDATE fees
+                SET payment_status = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE fee_id = ?
+            """, (
+                current_status,
+                fee_record["fee_id"]
+            ))
+
+
+def refresh_overdue_fee_dashboard(connection):
+    """Update the dashboard overdue-fee count."""
+
+    overdue_count = connection.execute("""
+        SELECT COUNT(*)
+        FROM fees
+        WHERE payment_status = 'Overdue'
+    """).fetchone()[0]
+
+    connection.execute("""
+        UPDATE dashboard_stats
+        SET overdue_fees = ?
+        WHERE stat_id = 1
+    """, (
+        overdue_count,
+    ))
+
+
 # Login
 
 
@@ -1051,6 +1171,572 @@ def teams():
         saved=request.args.get("saved") == "1"
     )
 
+
+
+# Fees Management
+
+
+@app.route("/fees")
+def fees():
+
+    # Check login
+    if "role" not in session:
+        return redirect(url_for("login"))
+
+    # Block viewer access
+    if session["role"] == "Viewer":
+        return redirect(url_for("viewer"))
+
+    search = request.args.get(
+        "search",
+        ""
+    ).strip()
+
+    selected_status = request.args.get(
+        "status",
+        ""
+    ).strip()
+
+    selected_age_group = request.args.get(
+        "age_group",
+        ""
+    ).strip()
+
+    current_year = date.today().year
+
+    selected_season_value = request.args.get(
+        "season",
+        str(current_year)
+    ).strip()
+
+    try:
+        selected_season = int(selected_season_value)
+
+    except ValueError:
+        selected_season = current_year
+
+    allowed_statuses = {
+        "",
+        "Paid",
+        "Part Payment",
+        "Overdue",
+        "Unpaid"
+    }
+
+    if selected_status not in allowed_statuses:
+        selected_status = ""
+
+    connection = get_database_connection()
+    ensure_fees_table(connection)
+
+    # Keep overdue statuses accurate as dates pass.
+    refresh_fee_statuses(connection)
+    refresh_overdue_fee_dashboard(connection)
+    connection.commit()
+
+    query = """
+        SELECT
+            fees.fee_id,
+            fees.player_id,
+            fees.season,
+            fees.amount_due,
+            fees.amount_paid,
+            fees.payment_status,
+            fees.due_date,
+            fees.payment_date,
+            fees.notes,
+            players.first_name,
+            players.last_name,
+            players.age_group,
+            players.team
+
+        FROM fees
+
+        JOIN players
+            ON fees.player_id = players.player_id
+
+        WHERE fees.season = ?
+    """
+
+    parameters = [
+        selected_season
+    ]
+
+    if search:
+        query += """
+            AND (
+                players.first_name LIKE ?
+                OR players.last_name LIKE ?
+                OR (
+                    players.first_name || ' ' ||
+                    players.last_name
+                ) LIKE ?
+            )
+        """
+
+        search_value = f"%{search}%"
+
+        parameters.extend([
+            search_value,
+            search_value,
+            search_value
+        ])
+
+    if selected_status:
+        query += """
+            AND fees.payment_status = ?
+        """
+
+        parameters.append(
+            selected_status
+        )
+
+    if selected_age_group:
+        query += """
+            AND players.age_group = ?
+        """
+
+        parameters.append(
+            selected_age_group
+        )
+
+    query += """
+        ORDER BY
+            players.last_name,
+            players.first_name
+    """
+
+    fee_records = connection.execute(
+        query,
+        parameters
+    ).fetchall()
+
+    # Summary cards show the selected season.
+    summary = connection.execute("""
+        SELECT
+            SUM(
+                CASE
+                    WHEN payment_status = 'Paid'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS paid_count,
+
+            SUM(
+                CASE
+                    WHEN payment_status = 'Paid'
+                    THEN amount_paid
+                    ELSE 0
+                END
+            ) AS paid_total,
+
+            SUM(
+                CASE
+                    WHEN payment_status = 'Part Payment'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS part_payment_count,
+
+            SUM(
+                CASE
+                    WHEN payment_status = 'Part Payment'
+                    THEN amount_paid
+                    ELSE 0
+                END
+            ) AS part_payment_total,
+
+            SUM(
+                CASE
+                    WHEN payment_status = 'Overdue'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS overdue_count,
+
+            SUM(
+                CASE
+                    WHEN payment_status = 'Overdue'
+                    THEN MAX(amount_due - amount_paid, 0)
+                    ELSE 0
+                END
+            ) AS overdue_total
+
+        FROM fees
+        WHERE season = ?
+    """, (
+        selected_season,
+    )).fetchone()
+
+    players_for_fees = connection.execute("""
+        SELECT
+            player_id,
+            first_name,
+            last_name,
+            age_group
+        FROM players
+        WHERE registration_status = 'Active'
+        ORDER BY
+            last_name,
+            first_name
+    """).fetchall()
+
+    age_groups = connection.execute("""
+        SELECT DISTINCT age_group
+        FROM players
+        WHERE registration_status = 'Active'
+          AND age_group IS NOT NULL
+          AND TRIM(age_group) != ''
+        ORDER BY age_group
+    """).fetchall()
+
+    saved_seasons = connection.execute("""
+        SELECT DISTINCT season
+        FROM fees
+        ORDER BY season DESC
+    """).fetchall()
+
+    seasons = {
+        current_year - 2,
+        current_year - 1,
+        current_year,
+        current_year + 1
+    }
+
+    for season_record in saved_seasons:
+        seasons.add(
+            int(season_record["season"])
+        )
+
+    seasons = sorted(
+        seasons,
+        reverse=True
+    )
+
+    connection.close()
+
+    return render_template(
+        "fees.html",
+        fees=fee_records,
+        players=players_for_fees,
+        age_groups=age_groups,
+        seasons=seasons,
+        paid_count=summary["paid_count"] or 0,
+        paid_total=summary["paid_total"] or 0,
+        part_payment_count=(
+            summary["part_payment_count"] or 0
+        ),
+        part_payment_total=(
+            summary["part_payment_total"] or 0
+        ),
+        overdue_count=summary["overdue_count"] or 0,
+        overdue_total=summary["overdue_total"] or 0,
+        search=search,
+        selected_status=selected_status,
+        selected_age_group=selected_age_group,
+        selected_season=selected_season,
+        saved=request.args.get("saved") == "1"
+    )
+
+
+@app.route("/fees/add", methods=["POST"])
+def add_fee():
+
+    # Check login
+    if "role" not in session:
+        return redirect(url_for("login"))
+
+    # Only admins can create fee records.
+    if session["role"] != "Admin":
+        return redirect(url_for("fees"))
+
+    player_id_value = request.form.get(
+        "player_id",
+        ""
+    ).strip()
+
+    season_value = request.form.get(
+        "season",
+        ""
+    ).strip()
+
+    amount_due_value = request.form.get(
+        "amount_due",
+        ""
+    ).strip()
+
+    amount_paid_value = request.form.get(
+        "amount_paid",
+        "0"
+    ).strip()
+
+    due_date = request.form.get(
+        "due_date",
+        ""
+    ).strip()
+
+    notes = request.form.get(
+        "notes",
+        ""
+    ).strip()
+
+    try:
+        player_id = int(player_id_value)
+        season = int(season_value)
+        amount_due = float(amount_due_value)
+        amount_paid = float(amount_paid_value)
+
+    except (TypeError, ValueError):
+        return redirect(url_for("fees"))
+
+    if amount_due < 0 or amount_paid < 0:
+        return redirect(url_for("fees"))
+
+    # A payment cannot exceed the amount due.
+    amount_paid = min(
+        amount_paid,
+        amount_due
+    )
+
+    try:
+        date.fromisoformat(due_date)
+
+    except ValueError:
+        return redirect(url_for("fees"))
+
+    connection = get_database_connection()
+    ensure_fees_table(connection)
+
+    player = connection.execute("""
+        SELECT player_id
+        FROM players
+        WHERE player_id = ?
+          AND registration_status = 'Active'
+    """, (
+        player_id,
+    )).fetchone()
+
+    if not player:
+        connection.close()
+        return redirect(url_for("fees"))
+
+    payment_status = calculate_fee_status(
+        amount_due,
+        amount_paid,
+        due_date
+    )
+
+    payment_date = (
+        date.today().isoformat()
+        if amount_paid > 0
+        else None
+    )
+
+    # One fee record is stored per player and season.
+    connection.execute("""
+        INSERT INTO fees (
+            player_id,
+            season,
+            amount_due,
+            amount_paid,
+            payment_status,
+            due_date,
+            payment_date,
+            notes,
+            created_at,
+            updated_at
+        )
+        VALUES (
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            CURRENT_TIMESTAMP,
+            CURRENT_TIMESTAMP
+        )
+
+        ON CONFLICT (
+            player_id,
+            season
+        )
+
+        DO UPDATE SET
+            amount_due = excluded.amount_due,
+            amount_paid = excluded.amount_paid,
+            payment_status = excluded.payment_status,
+            due_date = excluded.due_date,
+            payment_date = excluded.payment_date,
+            notes = excluded.notes,
+            updated_at = CURRENT_TIMESTAMP
+    """, (
+        player_id,
+        season,
+        amount_due,
+        amount_paid,
+        payment_status,
+        due_date,
+        payment_date,
+        notes
+    ))
+
+    refresh_overdue_fee_dashboard(connection)
+
+    connection.commit()
+    connection.close()
+
+    return redirect(
+        url_for(
+            "fees",
+            season=season,
+            saved="1"
+        )
+    )
+
+
+@app.route(
+    "/fees/payment/<int:fee_id>",
+    methods=["POST"]
+)
+def add_fee_payment(fee_id):
+
+    # Check login
+    if "role" not in session:
+        return redirect(url_for("login"))
+
+    # Only admins can record payments.
+    if session["role"] != "Admin":
+        return redirect(url_for("fees"))
+
+    payment_amount_value = request.form.get(
+        "payment_amount",
+        ""
+    ).strip()
+
+    payment_notes = request.form.get(
+        "notes",
+        ""
+    ).strip()
+
+    try:
+        payment_amount = float(
+            payment_amount_value
+        )
+
+    except (TypeError, ValueError):
+        return redirect(url_for("fees"))
+
+    if payment_amount <= 0:
+        return redirect(url_for("fees"))
+
+    connection = get_database_connection()
+    ensure_fees_table(connection)
+
+    fee_record = connection.execute("""
+        SELECT
+            fee_id,
+            season,
+            amount_due,
+            amount_paid,
+            due_date,
+            notes
+        FROM fees
+        WHERE fee_id = ?
+    """, (
+        fee_id,
+    )).fetchone()
+
+    if not fee_record:
+        connection.close()
+        return redirect(url_for("fees"))
+
+    amount_due = float(
+        fee_record["amount_due"]
+    )
+
+    existing_amount_paid = float(
+        fee_record["amount_paid"]
+    )
+
+    remaining_amount = max(
+        amount_due - existing_amount_paid,
+        0
+    )
+
+    if remaining_amount <= 0:
+        connection.close()
+
+        return redirect(
+            url_for(
+                "fees",
+                season=fee_record["season"]
+            )
+        )
+
+    accepted_payment = min(
+        payment_amount,
+        remaining_amount
+    )
+
+    new_amount_paid = (
+        existing_amount_paid +
+        accepted_payment
+    )
+
+    payment_status = calculate_fee_status(
+        amount_due,
+        new_amount_paid,
+        fee_record["due_date"]
+    )
+
+    existing_notes = (
+        fee_record["notes"] or ""
+    ).strip()
+
+    if payment_notes and existing_notes:
+        combined_notes = (
+            existing_notes +
+            "\n" +
+            payment_notes
+        )
+
+    elif payment_notes:
+        combined_notes = payment_notes
+
+    else:
+        combined_notes = existing_notes
+
+    connection.execute("""
+        UPDATE fees
+        SET amount_paid = ?,
+            payment_status = ?,
+            payment_date = ?,
+            notes = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE fee_id = ?
+    """, (
+        new_amount_paid,
+        payment_status,
+        date.today().isoformat(),
+        combined_notes,
+        fee_id
+    ))
+
+    refresh_overdue_fee_dashboard(connection)
+
+    connection.commit()
+    connection.close()
+
+    return redirect(
+        url_for(
+            "fees",
+            season=fee_record["season"],
+            saved="1"
+        )
+    )
 
 
 # Viewer Page
