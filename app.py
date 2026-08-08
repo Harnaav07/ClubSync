@@ -987,7 +987,7 @@ def teams():
 
     connection.commit()
 
-    # Save the selected line-up
+    # Save selected line-up
     if request.method == "POST":
 
         if not selected_age_group:
