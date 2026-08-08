@@ -2181,6 +2181,430 @@ def edit_asset(asset_id):
     )
 
 
+
+# Training Sessions Management
+
+
+def ensure_training_table(connection):
+    """Create the training_sessions table if it does not exist."""
+
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS training_sessions (
+            session_id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            session_date TEXT NOT NULL,
+
+            team TEXT NOT NULL,
+
+            session_type TEXT NOT NULL
+                CHECK (
+                    session_type IN (
+                        'Training',
+                        'Skills Session',
+                        'Fitness',
+                        'Tactical'
+                    )
+                ),
+
+            session_time TEXT NOT NULL,
+
+            location TEXT NOT NULL,
+
+            coach_name TEXT NOT NULL,
+
+            created_by_user_id INTEGER,
+
+            created_at TEXT NOT NULL
+                DEFAULT CURRENT_TIMESTAMP,
+
+            updated_at TEXT NOT NULL
+                DEFAULT CURRENT_TIMESTAMP,
+
+            FOREIGN KEY (created_by_user_id)
+                REFERENCES users(user_id)
+                ON DELETE SET NULL
+        )
+    """)
+
+
+@app.route("/training")
+def training():
+
+    # Check login
+    if "role" not in session:
+        return redirect(url_for("login"))
+
+    # Viewer users use their separate read-only page.
+    if session["role"] == "Viewer":
+        return redirect(url_for("viewer"))
+
+    selected_team = request.args.get(
+        "team",
+        ""
+    ).strip()
+
+    selected_session_type = request.args.get(
+        "session_type",
+        ""
+    ).strip()
+
+    selected_date = request.args.get(
+        "training_date",
+        ""
+    ).strip()
+
+    allowed_session_types = {
+        "",
+        "Training",
+        "Skills Session",
+        "Fitness",
+        "Tactical"
+    }
+
+    if selected_session_type not in allowed_session_types:
+        selected_session_type = ""
+
+    # Validate date filter when one is supplied.
+    if selected_date:
+        try:
+            date.fromisoformat(selected_date)
+        except ValueError:
+            selected_date = ""
+
+    connection = get_database_connection()
+    ensure_training_table(connection)
+
+    query = """
+        SELECT *
+        FROM training_sessions
+        WHERE 1 = 1
+    """
+
+    parameters = []
+
+    if selected_team:
+        query += """
+            AND team = ?
+        """
+        parameters.append(selected_team)
+
+    if selected_session_type:
+        query += """
+            AND session_type = ?
+        """
+        parameters.append(selected_session_type)
+
+    if selected_date:
+        query += """
+            AND session_date = ?
+        """
+        parameters.append(selected_date)
+
+    query += """
+        ORDER BY
+            session_date ASC,
+            session_time ASC,
+            team ASC
+    """
+
+    training_records = connection.execute(
+        query,
+        parameters
+    ).fetchall()
+
+    # Use teams already stored against active players
+    # so the Training filter stays linked to ClubSync data.
+    team_records = connection.execute("""
+        SELECT DISTINCT team
+        FROM players
+        WHERE team IS NOT NULL
+          AND TRIM(team) != ''
+          AND registration_status = 'Active'
+        ORDER BY team
+    """).fetchall()
+
+    connection.close()
+
+    return render_template(
+        "training.html",
+        training_sessions=training_records,
+        teams=team_records,
+        selected_team=selected_team,
+        selected_session_type=selected_session_type,
+        selected_date=selected_date,
+        saved=request.args.get("saved") == "1"
+    )
+
+
+@app.route("/training/add", methods=["POST"])
+def add_training():
+
+    # Check login
+    if "role" not in session:
+        return redirect(url_for("login"))
+
+    # Admins and Coaches can create training sessions.
+    if session["role"] not in ["Admin", "Coach"]:
+        return redirect(url_for("viewer"))
+
+    session_date = request.form.get(
+        "session_date",
+        ""
+    ).strip()
+
+    team = request.form.get(
+        "team",
+        ""
+    ).strip()
+
+    session_type = request.form.get(
+        "session_type",
+        ""
+    ).strip()
+
+    session_time = request.form.get(
+        "session_time",
+        ""
+    ).strip()
+
+    location = request.form.get(
+        "location",
+        ""
+    ).strip()
+
+    coach_name = request.form.get(
+        "coach_name",
+        ""
+    ).strip()
+
+    allowed_session_types = {
+        "Training",
+        "Skills Session",
+        "Fitness",
+        "Tactical"
+    }
+
+    if (
+        not session_date
+        or not team
+        or session_type not in allowed_session_types
+        or not session_time
+        or not location
+        or not coach_name
+    ):
+        return redirect(url_for("training"))
+
+    try:
+        date.fromisoformat(session_date)
+    except ValueError:
+        return redirect(url_for("training"))
+
+    # HTML time inputs should submit HH:MM.
+    if (
+        len(session_time) != 5
+        or session_time[2] != ":"
+        or not session_time[:2].isdigit()
+        or not session_time[3:].isdigit()
+    ):
+        return redirect(url_for("training"))
+
+    hour = int(session_time[:2])
+    minute = int(session_time[3:])
+
+    if hour > 23 or minute > 59:
+        return redirect(url_for("training"))
+
+    connection = get_database_connection()
+    ensure_training_table(connection)
+
+    connection.execute("""
+        INSERT INTO training_sessions (
+            session_date,
+            team,
+            session_type,
+            session_time,
+            location,
+            coach_name,
+            created_by_user_id,
+            created_at,
+            updated_at
+        )
+        VALUES (
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            CURRENT_TIMESTAMP,
+            CURRENT_TIMESTAMP
+        )
+    """, (
+        session_date,
+        team,
+        session_type,
+        session_time,
+        location,
+        coach_name,
+        session.get("user_id")
+    ))
+
+    connection.commit()
+    connection.close()
+
+    return redirect(
+        url_for(
+            "training",
+            saved="1"
+        )
+    )
+
+
+@app.route(
+    "/training/edit/<int:session_id>",
+    methods=["POST"]
+)
+def edit_training(session_id):
+
+    # Check login
+    if "role" not in session:
+        return redirect(url_for("login"))
+
+    # Admins and Coaches can edit training sessions.
+    if session["role"] not in ["Admin", "Coach"]:
+        return redirect(url_for("viewer"))
+
+    session_date = request.form.get(
+        "session_date",
+        ""
+    ).strip()
+
+    team = request.form.get(
+        "team",
+        ""
+    ).strip()
+
+    session_type = request.form.get(
+        "session_type",
+        ""
+    ).strip()
+
+    session_time = request.form.get(
+        "session_time",
+        ""
+    ).strip()
+
+    location = request.form.get(
+        "location",
+        ""
+    ).strip()
+
+    coach_name = request.form.get(
+        "coach_name",
+        ""
+    ).strip()
+
+    allowed_session_types = {
+        "Training",
+        "Skills Session",
+        "Fitness",
+        "Tactical"
+    }
+
+    if (
+        not session_date
+        or not team
+        or session_type not in allowed_session_types
+        or not session_time
+        or not location
+        or not coach_name
+    ):
+        return redirect(url_for("training"))
+
+    try:
+        date.fromisoformat(session_date)
+    except ValueError:
+        return redirect(url_for("training"))
+
+    if (
+        len(session_time) != 5
+        or session_time[2] != ":"
+        or not session_time[:2].isdigit()
+        or not session_time[3:].isdigit()
+    ):
+        return redirect(url_for("training"))
+
+    hour = int(session_time[:2])
+    minute = int(session_time[3:])
+
+    if hour > 23 or minute > 59:
+        return redirect(url_for("training"))
+
+    connection = get_database_connection()
+    ensure_training_table(connection)
+
+    connection.execute("""
+        UPDATE training_sessions
+        SET session_date = ?,
+            team = ?,
+            session_type = ?,
+            session_time = ?,
+            location = ?,
+            coach_name = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE session_id = ?
+    """, (
+        session_date,
+        team,
+        session_type,
+        session_time,
+        location,
+        coach_name,
+        session_id
+    ))
+
+    connection.commit()
+    connection.close()
+
+    return redirect(
+        url_for(
+            "training",
+            saved="1"
+        )
+    )
+
+
+@app.route(
+    "/training/delete/<int:session_id>",
+    methods=["POST"]
+)
+def delete_training(session_id):
+
+    # Check login
+    if "role" not in session:
+        return redirect(url_for("login"))
+
+    # Admins and Coaches can delete training sessions.
+    if session["role"] not in ["Admin", "Coach"]:
+        return redirect(url_for("viewer"))
+
+    connection = get_database_connection()
+    ensure_training_table(connection)
+
+    connection.execute("""
+        DELETE FROM training_sessions
+        WHERE session_id = ?
+    """, (
+        session_id,
+    ))
+
+    connection.commit()
+    connection.close()
+
+    return redirect(url_for("training"))
+
+
 # Viewer Page
 
 
