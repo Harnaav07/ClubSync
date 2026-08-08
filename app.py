@@ -61,10 +61,17 @@ def get_user_by_email(email):
     return user
 
 
-def get_dashboard_stats():
-    """Get the latest dashboard statistics."""
+def get_dashboard_data():
+    """Get live dashboard data directly from ClubSync tables."""
 
     connection = get_database_connection()
+
+    # Make sure fee statuses are current before dashboard calculations.
+    ensure_fees_table(connection)
+    refresh_fee_statuses(connection)
+
+    # Make sure the Assets table exists.
+    ensure_assets_table(connection)
 
     stats = connection.execute("""
         SELECT
@@ -78,39 +85,96 @@ def get_dashboard_stats():
                 FROM attendance
             ) AS attendance_records,
 
-            overdue_fees,
-            club_assets
+            (
+                SELECT COUNT(*)
+                FROM fees
+                WHERE payment_status = 'Overdue'
+            ) AS overdue_fees,
 
-        FROM dashboard_stats
-        WHERE stat_id = 1
+            (
+                SELECT COUNT(*)
+                FROM assets
+            ) AS club_assets
     """).fetchone()
 
-    connection.close()
+    # Get the five most recent attendance dates.
+    attendance_history = connection.execute("""
+        SELECT
+            attendance_date,
 
-    return stats
+            COUNT(*) AS total_records,
 
+            SUM(
+                CASE
+                    WHEN attendance_status = 'Present'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS present_count,
 
-def update_dashboard_stats(
-    overdue_fees,
-    club_assets
-):
-    """Update dashboard values managed by admins."""
+            ROUND(
+                (
+                    SUM(
+                        CASE
+                            WHEN attendance_status = 'Present'
+                            THEN 1
+                            ELSE 0
+                        END
+                    ) * 100.0
+                ) / COUNT(*)
+            ) AS present_percentage
 
-    connection = get_database_connection()
+        FROM attendance
 
-    connection.execute("""
-        UPDATE dashboard_stats
-        SET overdue_fees = ?,
-            club_assets = ?
-        WHERE stat_id = 1
-    """, (
-        overdue_fees,
-        club_assets
-    ))
+        GROUP BY attendance_date
 
+        ORDER BY attendance_date DESC
+
+        LIMIT 5
+    """).fetchall()
+
+    # Reverse so the oldest of the five dates appears first.
+    attendance_history = list(
+        reversed(attendance_history)
+    )
+
+    # Group current overdue fees by player age group.
+    overdue_fee_summary = connection.execute("""
+        SELECT
+            players.age_group,
+            COUNT(*) AS overdue_count
+
+        FROM fees
+
+        INNER JOIN players
+            ON players.player_id = fees.player_id
+
+        WHERE fees.payment_status = 'Overdue'
+
+        GROUP BY players.age_group
+
+        ORDER BY
+            CASE players.age_group
+                WHEN 'U10' THEN 1
+                WHEN 'U12' THEN 2
+                WHEN 'U14' THEN 3
+                WHEN 'U16' THEN 4
+                WHEN 'U18' THEN 5
+                WHEN 'Senior' THEN 6
+                ELSE 7
+            END,
+            players.age_group
+    """).fetchall()
+
+    # Save any refreshed fee statuses.
     connection.commit()
     connection.close()
 
+    return (
+        stats,
+        attendance_history,
+        overdue_fee_summary
+    )
 
 
 def ensure_fees_table(connection):
@@ -287,7 +351,7 @@ def login():
 # Dashboard
 
 
-@app.route("/dashboard", methods=["GET", "POST"])
+@app.route("/dashboard")
 def dashboard():
 
     # Check login
@@ -298,25 +362,17 @@ def dashboard():
     if session["role"] == "Viewer":
         return redirect(url_for("viewer"))
 
-    if request.method == "POST":
-
-        # Only admins can update these values
-        if session["role"] != "Admin":
-            return redirect(url_for("dashboard"))
-
-        update_dashboard_stats(
-            request.form.get("overdue_fees", 0),
-            request.form.get("club_assets", 0)
-        )
-
-        return redirect(url_for("dashboard"))
-
-    # Get dashboard data
-    stats = get_dashboard_stats()
+    (
+        stats,
+        attendance_history,
+        overdue_fee_summary
+    ) = get_dashboard_data()
 
     return render_template(
         "dashboard.html",
-        stats=stats
+        stats=stats,
+        attendance_history=attendance_history,
+        overdue_fee_summary=overdue_fee_summary
     )
 
 
@@ -987,7 +1043,7 @@ def teams():
 
     connection.commit()
 
-    # Save selected line-up
+    # Save the selected line-up
     if request.method == "POST":
 
         if not selected_age_group:

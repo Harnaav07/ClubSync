@@ -100,8 +100,6 @@
         <section class="summary-grid">
 
 
-            <!-- Total Players -->
-
             <a
                 href="{{ url_for('players') }}"
                 class="summary-card summary-card-link"
@@ -115,9 +113,6 @@
 
             </a>
 
-
-
-            <!-- Attendance Records -->
 
             <a
                 href="{{ url_for('attendance') }}"
@@ -133,9 +128,6 @@
             </a>
 
 
-
-            <!-- Overdue Fees -->
-
             <a
                 href="{{ url_for('fees') }}"
                 class="summary-card summary-card-link"
@@ -149,9 +141,6 @@
 
             </a>
 
-
-
-            <!-- Club Assets -->
 
             <a
                 href="{{ url_for('assets') }}"
@@ -171,64 +160,102 @@
 
 
 
-        <!-- Dashboard lower sections -->
+        <!-- Live dashboard panels -->
 
         <section class="dashboard-sections">
 
 
-            <!-- Attendance History -->
+            <!-- Live Attendance History -->
 
-            <div class="panel large-panel">
+            <a
+                href="{{ url_for('attendance') }}"
+                class="panel large-panel dashboard-panel-link"
+            >
 
-                <h3>
-                    Attendance History
-                </h3>
+                <h3>Attendance History</h3>
+
+                {% if attendance_history %}
+
+                    <div class="fake-chart">
+
+                        {% for record in attendance_history %}
+
+                            <div
+                                class="dashboard-attendance-bar"
+                                style="height: {{ [record['present_percentage'], 8]|max }}%;"
+                                title="{{ record['attendance_date'] }}: {{ record['present_count'] }} present ({{ record['present_percentage']|int }}%)"
+                            >
+                                <span>
+                                    {{ record["present_percentage"]|int }}%
+                                </span>
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                    <div class="dashboard-chart-labels">
+
+                        {% for record in attendance_history %}
+
+                            <span>
+                                {{ record["attendance_date"] }}
+                            </span>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    <div class="dashboard-empty-panel">
+                        No attendance records yet.
+                    </div>
+
+                {% endif %}
+
+            </a>
 
 
-                <div class="fake-chart">
 
-                    <div style="height: 45%;"></div>
+            <!-- Live Overdue Fee Summary -->
 
-                    <div style="height: 70%;"></div>
+            <a
+                href="{{ url_for('fees', status='Overdue') }}"
+                class="panel dashboard-panel-link"
+            >
 
-                    <div style="height: 55%;"></div>
+                <h3>Overdue Fee Summary</h3>
 
-                    <div style="height: 85%;"></div>
+                {% if overdue_fee_summary %}
 
-                    <div style="height: 65%;"></div>
+                    <ul class="fee-list">
 
-                </div>
+                        {% for fee_group in overdue_fee_summary %}
 
-            </div>
+                            <li>
+                                {{ fee_group["age_group"] }} Team -
+                                {{ fee_group["overdue_count"] }}
+                                {% if fee_group["overdue_count"] == 1 %}
+                                    unpaid
+                                {% else %}
+                                    unpaid
+                                {% endif %}
+                            </li>
 
+                        {% endfor %}
 
+                    </ul>
 
-            <!-- Overdue Fee Summary -->
+                {% else %}
 
-            <div class="panel">
+                    <div class="dashboard-empty-panel">
+                        No overdue fees.
+                    </div>
 
-                <h3>
-                    Overdue Fee Summary
-                </h3>
+                {% endif %}
 
-
-                <ul class="fee-list">
-
-                    <li>
-                        U14 Team - 3 unpaid
-                    </li>
-
-                    <li>
-                        U16 Team - 2 unpaid
-                    </li>
-
-                    <li>
-                        Senior Team - 4 unpaid
-                    </li>
-
-                </ul>
-
-            </div>
+            </a>
 
 
         </section>
