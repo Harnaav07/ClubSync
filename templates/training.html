@@ -110,18 +110,59 @@
                             All Teams
                         </option>
 
-                        {% for team_record in teams %}
+                        <option
+                            value="U10"
+                            {% if selected_team == "U10" %}
+                                selected
+                            {% endif %}
+                        >
+                            U10
+                        </option>
 
-                            <option
-                                value="{{ team_record['team'] }}"
-                                {% if selected_team == team_record['team'] %}
-                                    selected
-                                {% endif %}
-                            >
-                                {{ team_record["team"] }}
-                            </option>
+                        <option
+                            value="U12"
+                            {% if selected_team == "U12" %}
+                                selected
+                            {% endif %}
+                        >
+                            U12
+                        </option>
 
-                        {% endfor %}
+                        <option
+                            value="U14"
+                            {% if selected_team == "U14" %}
+                                selected
+                            {% endif %}
+                        >
+                            U14
+                        </option>
+
+                        <option
+                            value="U16"
+                            {% if selected_team == "U16" %}
+                                selected
+                            {% endif %}
+                        >
+                            U16
+                        </option>
+
+                        <option
+                            value="U18"
+                            {% if selected_team == "U18" %}
+                                selected
+                            {% endif %}
+                        >
+                            U18
+                        </option>
+
+                        <option
+                            value="Senior"
+                            {% if selected_team == "Senior" %}
+                                selected
+                            {% endif %}
+                        >
+                            Senior
+                        </option>
 
                     </select>
 
@@ -250,6 +291,7 @@
                         <tr>
                             <th>Date</th>
                             <th>Team</th>
+                            <th>Team Type</th>
                             <th>Session Type</th>
                             <th>Time</th>
                             <th>Location</th>
@@ -267,11 +309,15 @@
                             <tr>
 
                                 <td>
-                                    {{ training_session["session_date"] }}
+                                    {{ training_session["session_date"][8:10] }}/{{ training_session["session_date"][5:7] }}/{{ training_session["session_date"][2:4] }}
                                 </td>
 
                                 <td>
                                     {{ training_session["team"] }}
+                                </td>
+
+                                <td>
+                                    {{ training_session["team_type"] }}
                                 </td>
 
                                 <td>
@@ -299,6 +345,7 @@
                                             '{{ training_session['session_id'] }}',
                                             '{{ training_session['session_date'] }}',
                                             '{{ training_session['team']|e }}',
+                                            '{{ training_session['team_type']|e }}',
                                             '{{ training_session['session_type']|e }}',
                                             '{{ training_session['session_time'] }}',
                                             '{{ training_session['location']|e }}',
@@ -340,7 +387,7 @@
                             <tr>
 
                                 <td
-                                    colspan="7"
+                                    colspan="8"
                                     class="training-empty-state"
                                 >
                                     No training sessions were found.
@@ -415,11 +462,34 @@
                         Team
                     </label>
 
-                    <input
+                    <select
                         id="sessionTeam"
-                        type="text"
                         name="team"
-                        placeholder="Example: U16 Boys"
+                        required
+                    >
+                        <option value="">Select Team</option>
+                        <option value="U10">U10</option>
+                        <option value="U12">U12</option>
+                        <option value="U14">U14</option>
+                        <option value="U16">U16</option>
+                        <option value="U18">U18</option>
+                        <option value="Senior">Senior</option>
+                    </select>
+
+                </div>
+
+                <!-- Team Type -->
+                <div class="training-form-field">
+
+                    <label for="sessionTeamType">
+                        Team Type
+                    </label>
+
+                    <input
+                        id="sessionTeamType"
+                        type="text"
+                        name="team_type"
+                        placeholder="Enter team type"
                         required
                     >
 
@@ -583,10 +653,35 @@
                         Team
                     </label>
 
-                    <input
+                    <select
                         id="editSessionTeam"
-                        type="text"
                         name="team"
+                        required
+                    >
+                        <option value="">Select Team</option>
+                        <option value="U10">U10</option>
+                        <option value="U12">U12</option>
+                        <option value="U14">U14</option>
+                        <option value="U16">U16</option>
+                        <option value="U18">U18</option>
+                        <option value="Senior">Senior</option>
+                    </select>
+
+                </div>
+
+
+                <!-- Team Type -->
+                <div class="training-form-field">
+
+                    <label for="editSessionTeamType">
+                        Team Type
+                    </label>
+
+                    <input
+                        id="editSessionTeamType"
+                        type="text"
+                        name="team_type"
+                        placeholder="Enter team type"
                         required
                     >
 
@@ -714,6 +809,7 @@
         sessionId,
         sessionDate,
         team,
+        teamType,
         sessionType,
         sessionTime,
         location,
@@ -727,6 +823,10 @@
         document.getElementById(
             "editSessionTeam"
         ).value = team;
+
+        document.getElementById(
+            "editSessionTeamType"
+        ).value = teamType;
 
         document.getElementById(
             "editSessionType"

@@ -547,6 +547,8 @@ cursor.execute("""
 
         team TEXT NOT NULL,
 
+        team_type TEXT NOT NULL,
+
         session_type TEXT NOT NULL
             CHECK (
                 session_type IN (
@@ -592,6 +594,14 @@ training_columns = {
     column[1]
     for column in cursor.fetchall()
 }
+
+
+if "team_type" not in training_columns:
+
+    cursor.execute("""
+        ALTER TABLE training_sessions
+        ADD COLUMN team_type TEXT NOT NULL DEFAULT ''
+    """)
 
 
 if "created_by_user_id" not in training_columns:
@@ -776,6 +786,14 @@ cursor.execute("""
     index_training_type
 
     ON training_sessions(session_type)
+""")
+
+
+cursor.execute("""
+    CREATE INDEX IF NOT EXISTS
+    index_training_team_type
+
+    ON training_sessions(team_type)
 """)
 
 

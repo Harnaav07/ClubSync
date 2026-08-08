@@ -2196,6 +2196,8 @@ def ensure_training_table(connection):
 
             team TEXT NOT NULL,
 
+            team_type TEXT NOT NULL,
+
             session_type TEXT NOT NULL
                 CHECK (
                     session_type IN (
@@ -2226,6 +2228,20 @@ def ensure_training_table(connection):
         )
     """)
 
+    training_columns = {
+        column[1]
+        for column in connection.execute(
+            "PRAGMA table_info(training_sessions)"
+        ).fetchall()
+    }
+
+    if "team_type" not in training_columns:
+        connection.execute("""
+            ALTER TABLE training_sessions
+            ADD COLUMN team_type TEXT NOT NULL DEFAULT ''
+        """)
+        connection.commit()
+
 
 @app.route("/training")
 def training():
@@ -2242,6 +2258,19 @@ def training():
         "team",
         ""
     ).strip()
+
+    allowed_teams = {
+        "",
+        "U10",
+        "U12",
+        "U14",
+        "U16",
+        "U18",
+        "Senior"
+    }
+
+    if selected_team not in allowed_teams:
+        selected_team = ""
 
     selected_session_type = request.args.get(
         "session_type",
@@ -2357,6 +2386,11 @@ def add_training():
         ""
     ).strip()
 
+    team_type = request.form.get(
+        "team_type",
+        ""
+    ).strip()
+
     session_type = request.form.get(
         "session_type",
         ""
@@ -2377,6 +2411,15 @@ def add_training():
         ""
     ).strip()
 
+    allowed_teams = {
+        "U10",
+        "U12",
+        "U14",
+        "U16",
+        "U18",
+        "Senior"
+    }
+
     allowed_session_types = {
         "Training",
         "Skills Session",
@@ -2386,7 +2429,8 @@ def add_training():
 
     if (
         not session_date
-        or not team
+        or team not in allowed_teams
+        or not team_type
         or session_type not in allowed_session_types
         or not session_time
         or not location
@@ -2421,6 +2465,7 @@ def add_training():
         INSERT INTO training_sessions (
             session_date,
             team,
+            team_type,
             session_type,
             session_time,
             location,
@@ -2437,12 +2482,14 @@ def add_training():
             ?,
             ?,
             ?,
+            ?,
             CURRENT_TIMESTAMP,
             CURRENT_TIMESTAMP
         )
     """, (
         session_date,
         team,
+        team_type,
         session_type,
         session_time,
         location,
@@ -2485,6 +2532,11 @@ def edit_training(session_id):
         ""
     ).strip()
 
+    team_type = request.form.get(
+        "team_type",
+        ""
+    ).strip()
+
     session_type = request.form.get(
         "session_type",
         ""
@@ -2505,6 +2557,15 @@ def edit_training(session_id):
         ""
     ).strip()
 
+    allowed_teams = {
+        "U10",
+        "U12",
+        "U14",
+        "U16",
+        "U18",
+        "Senior"
+    }
+
     allowed_session_types = {
         "Training",
         "Skills Session",
@@ -2514,7 +2575,8 @@ def edit_training(session_id):
 
     if (
         not session_date
-        or not team
+        or team not in allowed_teams
+        or not team_type
         or session_type not in allowed_session_types
         or not session_time
         or not location
@@ -2548,6 +2610,7 @@ def edit_training(session_id):
         UPDATE training_sessions
         SET session_date = ?,
             team = ?,
+            team_type = ?,
             session_type = ?,
             session_time = ?,
             location = ?,
@@ -2557,6 +2620,7 @@ def edit_training(session_id):
     """, (
         session_date,
         team,
+        team_type,
         session_type,
         session_time,
         location,
@@ -2615,12 +2679,43 @@ def viewer():
     if "role" not in session:
         return redirect(url_for("login"))
 
-    # Only the viewers can use this page
+    # Only Viewer accounts can use this page.
     if session["role"] != "Viewer":
         return redirect(url_for("dashboard"))
 
-    return render_template("viewer.html")
+    connection = get_database_connection()
+    ensure_training_table(connection)
 
+    # Viewers only see current and upcoming training sessions.
+    training_sessions = connection.execute("""
+        SELECT
+            session_id,
+            session_date,
+            team,
+            team_type,
+            session_type,
+            session_time,
+            location,
+            coach_name
+
+        FROM training_sessions
+
+        WHERE session_date >= ?
+
+        ORDER BY
+            session_date ASC,
+            session_time ASC,
+            team ASC
+    """, (
+        date.today().isoformat(),
+    )).fetchall()
+
+    connection.close()
+
+    return render_template(
+        "viewer.html",
+        training_sessions=training_sessions
+    )
 
 
 # Logout

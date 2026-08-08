@@ -1,11 +1,250 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>Viewer Page</title>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>ClubSync Viewer Information</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
 </head>
-<body>
-    <h1>Viewer Page</h1>
-    <p>Read-only information page coming soon.</p>
-    <a href="/logout">Logout</a>
+
+
+<body class="viewer-page-body">
+
+<div class="viewer-layout">
+
+
+    <!-- Viewer sidebar -->
+
+    <aside class="viewer-sidebar">
+
+        <div class="viewer-brand">
+
+            <h1>ClubSync</h1>
+
+            <p>
+                Western Tigers SC
+            </p>
+
+        </div>
+
+
+        <nav class="viewer-navigation">
+
+            <a
+                class="active"
+                href="{{ url_for('viewer') }}"
+            >
+                General Information
+            </a>
+
+        </nav>
+
+
+        <a
+            class="viewer-logout"
+            href="{{ url_for('logout') }}"
+        >
+            Logout
+        </a>
+
+    </aside>
+
+
+
+    <!-- Viewer main content -->
+
+    <main class="viewer-main">
+
+
+        <!-- Top bar -->
+
+        <div class="viewer-top-bar">
+
+            <div>
+
+                <h2>
+                    Viewer Information
+                </h2>
+
+            </div>
+
+
+            <div class="viewer-role-box">
+                Viewer
+            </div>
+
+        </div>
+
+
+
+        <!-- Viewer mode message -->
+
+        <section class="viewer-mode-banner">
+
+            <div class="viewer-mode-icon">
+                i
+            </div>
+
+            <div>
+
+                <h3>
+                    You are in Viewer Mode
+                </h3>
+
+                <p>
+                    This page is read-only. Training information can be viewed,
+                    but records cannot be added, edited or deleted.
+                </p>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- Training schedule -->
+
+        <section class="viewer-training-card">
+
+
+            <div class="viewer-training-heading">
+
+                <div>
+
+                    <p class="viewer-section-label">
+                        Training Schedule
+                    </p>
+
+                    <h3>
+                        Upcoming Training Sessions
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="viewer-table-wrapper">
+
+                <table class="viewer-training-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Date
+                            </th>
+
+                            <th>
+                                Team
+                            </th>
+
+                            <th>
+                                Team Type
+                            </th>
+
+                            <th>
+                                Session Type
+                            </th>
+
+                            <th>
+                                Time
+                            </th>
+
+                            <th>
+                                Location
+                            </th>
+
+                            <th>
+                                Coach
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for training_session in training_sessions %}
+
+                            <tr>
+
+                                <td>
+                                    {{ training_session["session_date"] }}
+                                </td>
+
+                                <td>
+                                    {{ training_session["team"] }}
+                                </td>
+
+                                <td>
+                                    {{ training_session["team_type"] }}
+                                </td>
+
+                                <td>
+                                    {{ training_session["session_type"] }}
+                                </td>
+
+                                <td>
+                                    {{ training_session["session_time"] }}
+                                </td>
+
+                                <td>
+                                    {{ training_session["location"] }}
+                                </td>
+
+                                <td>
+                                    {{ training_session["coach_name"] }}
+                                </td>
+
+                            </tr>
+
+
+                        {% else %}
+
+                            <tr>
+
+                                <td
+                                    colspan="7"
+                                    class="viewer-empty-state"
+                                >
+                                    No upcoming training sessions.
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+        </section>
+
+
+    </main>
+
+
+</div>
+
 </body>
+
 </html>
