@@ -1739,6 +1739,392 @@ def add_fee_payment(fee_id):
     )
 
 
+
+# Assets Management
+
+
+def ensure_assets_table(connection):
+    """Create the assets table if it does not exist."""
+
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS assets (
+            asset_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            category TEXT NOT NULL,
+            condition TEXT NOT NULL
+                CHECK (
+                    condition IN (
+                        'Good',
+                        'Needs Review',
+                        'Damaged'
+                    )
+                ),
+            availability TEXT NOT NULL
+                CHECK (
+                    availability IN (
+                        'Available',
+                        'In use',
+                        'Unavailable'
+                    )
+                ),
+            allocated_to TEXT,
+            created_at TEXT NOT NULL
+                DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL
+                DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+
+def refresh_asset_dashboard(connection):
+    """Update the dashboard asset count."""
+
+    asset_count = connection.execute("""
+        SELECT COUNT(*)
+        FROM assets
+    """).fetchone()[0]
+
+    connection.execute("""
+        UPDATE dashboard_stats
+        SET club_assets = ?
+        WHERE stat_id = 1
+    """, (
+        asset_count,
+    ))
+
+
+@app.route("/assets")
+def assets():
+
+    # Check login
+    if "role" not in session:
+        return redirect(url_for("login"))
+
+    # Block viewer access
+    if session["role"] == "Viewer":
+        return redirect(url_for("viewer"))
+
+    search = request.args.get(
+        "search",
+        ""
+    ).strip()
+
+    selected_category = request.args.get(
+        "category",
+        ""
+    ).strip()
+
+    selected_condition = request.args.get(
+        "condition",
+        ""
+    ).strip()
+
+    selected_availability = request.args.get(
+        "availability",
+        ""
+    ).strip()
+
+    allowed_categories = {
+        "",
+        "Balls",
+        "Bibs",
+        "Cones",
+        "Gear",
+        "Equipment"
+    }
+
+    allowed_conditions = {
+        "",
+        "Good",
+        "Needs Review",
+        "Damaged"
+    }
+
+    allowed_availability = {
+        "",
+        "Available",
+        "In use",
+        "Unavailable"
+    }
+
+    if selected_category not in allowed_categories:
+        selected_category = ""
+
+    if selected_condition not in allowed_conditions:
+        selected_condition = ""
+
+    if selected_availability not in allowed_availability:
+        selected_availability = ""
+
+    connection = get_database_connection()
+    ensure_assets_table(connection)
+
+    query = """
+        SELECT *
+        FROM assets
+        WHERE 1 = 1
+    """
+
+    parameters = []
+
+    if search:
+        query += """
+            AND (
+                name LIKE ?
+                OR category LIKE ?
+                OR allocated_to LIKE ?
+            )
+        """
+
+        search_value = f"%{search}%"
+
+        parameters.extend([
+            search_value,
+            search_value,
+            search_value
+        ])
+
+    if selected_category:
+        query += " AND category = ?"
+        parameters.append(selected_category)
+
+    if selected_condition:
+        query += " AND condition = ?"
+        parameters.append(selected_condition)
+
+    if selected_availability:
+        query += " AND availability = ?"
+        parameters.append(selected_availability)
+
+    query += """
+        ORDER BY name
+    """
+
+    asset_records = connection.execute(
+        query,
+        parameters
+    ).fetchall()
+
+    connection.close()
+
+    return render_template(
+        "assets.html",
+        assets=asset_records,
+        search=search,
+        selected_category=selected_category,
+        selected_condition=selected_condition,
+        selected_availability=selected_availability
+    )
+
+
+@app.route("/assets/add", methods=["POST"])
+def add_asset():
+
+    # Check login
+    if "role" not in session:
+        return redirect(url_for("login"))
+
+    # Only admins can add assets
+    if session["role"] != "Admin":
+        return redirect(url_for("assets"))
+
+    name = request.form.get(
+        "name",
+        ""
+    ).strip()
+
+    category = request.form.get(
+        "category",
+        ""
+    ).strip()
+
+    condition = request.form.get(
+        "condition",
+        ""
+    ).strip()
+
+    availability = request.form.get(
+        "availability",
+        ""
+    ).strip()
+
+    allocated_to = request.form.get(
+        "allocated_to",
+        ""
+    ).strip()
+
+    allowed_categories = {
+        "Balls",
+        "Bibs",
+        "Cones",
+        "Gear",
+        "Equipment"
+    }
+
+    allowed_conditions = {
+        "Good",
+        "Needs Review",
+        "Damaged"
+    }
+
+    allowed_availability = {
+        "Available",
+        "In use",
+        "Unavailable"
+    }
+
+    if (
+        not name
+        or category not in allowed_categories
+        or condition not in allowed_conditions
+        or availability not in allowed_availability
+    ):
+        return redirect(url_for("assets"))
+
+    connection = get_database_connection()
+    ensure_assets_table(connection)
+
+    connection.execute("""
+        INSERT INTO assets (
+            name,
+            category,
+            condition,
+            availability,
+            allocated_to,
+            created_at,
+            updated_at
+        )
+        VALUES (
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            CURRENT_TIMESTAMP,
+            CURRENT_TIMESTAMP
+        )
+    """, (
+        name,
+        category,
+        condition,
+        availability,
+        allocated_to
+    ))
+
+    refresh_asset_dashboard(connection)
+
+    connection.commit()
+    connection.close()
+
+    return redirect(
+        url_for(
+            "assets",
+            saved="1"
+        )
+    )
+
+
+@app.route(
+    "/assets/edit/<int:asset_id>",
+    methods=["POST"]
+)
+def edit_asset(asset_id):
+
+    # Check login
+    if "role" not in session:
+        return redirect(url_for("login"))
+
+    # Only admins can edit assets
+    if session["role"] != "Admin":
+        return redirect(url_for("assets"))
+
+    name = request.form.get(
+        "name",
+        ""
+    ).strip()
+
+    category = request.form.get(
+        "category",
+        ""
+    ).strip()
+
+    condition = request.form.get(
+        "condition",
+        ""
+    ).strip()
+
+    availability = request.form.get(
+        "availability",
+        ""
+    ).strip()
+
+    allocated_to = request.form.get(
+        "allocated_to",
+        ""
+    ).strip()
+
+    allowed_categories = {
+        "Balls",
+        "Bibs",
+        "Cones",
+        "Gear",
+        "Equipment"
+    }
+
+    allowed_conditions = {
+        "Good",
+        "Needs Review",
+        "Damaged"
+    }
+
+    allowed_availability = {
+        "Available",
+        "In use",
+        "Unavailable"
+    }
+
+    if (
+        not name
+        or category not in allowed_categories
+        or condition not in allowed_conditions
+        or availability not in allowed_availability
+    ):
+        return redirect(url_for("assets"))
+
+    connection = get_database_connection()
+    ensure_assets_table(connection)
+
+    connection.execute("""
+        UPDATE assets
+        SET name = ?,
+            category = ?,
+            condition = ?,
+            availability = ?,
+            allocated_to = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE asset_id = ?
+    """, (
+        name,
+        category,
+        condition,
+        availability,
+        allocated_to,
+        asset_id
+    ))
+
+    refresh_asset_dashboard(connection)
+
+    connection.commit()
+    connection.close()
+
+    return redirect(
+        url_for(
+            "assets",
+            saved="1"
+        )
+    )
+
+
 # Viewer Page
 
 

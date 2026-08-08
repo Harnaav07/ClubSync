@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>ClubSync Asset Management</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+
+<div class="app-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <h1>ClubSync</h1>
+
+        <nav>
+
+            <a href="{{ url_for('dashboard') }}">
+                Dashboard
+            </a>
+
+            <a href="{{ url_for('players') }}">
+                Players
+            </a>
+
+            <a href="{{ url_for('attendance') }}">
+                Attendance
+            </a>
+
+            <a href="{{ url_for('teams') }}">
+                Teams
+            </a>
+
+            <a href="{{ url_for('fees') }}">
+                Fees
+            </a>
+
+            <a
+                class="active"
+                href="{{ url_for('assets') }}"
+            >
+                Assets
+            </a>
+
+            <a href="{{ url_for('logout') }}">
+                Logout
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- Main Assets content -->
+    <main class="main-content assets-page">
+
+        <!-- Top bar -->
+        <div class="top-bar">
+
+            <div>
+                <h2>Asset Management</h2>
+            </div>
+
+            <div class="user-box">
+                {{ session["role"] }}
+            </div>
+
+        </div>
+
+
+        <!-- Search and filter section -->
+        <section class="assets-filter-card">
+
+            <form
+                method="GET"
+                action="{{ url_for('assets') }}"
+                class="assets-filter-form"
+            >
+
+                <!-- Search -->
+                <div class="assets-filter-field assets-search-field">
+
+                    <label for="assetSearch">
+                        Search Assets
+                    </label>
+
+                    <input
+                        id="assetSearch"
+                        type="text"
+                        name="search"
+                        value="{{ search }}"
+                    >
+
+                </div>
+
+
+                <!-- Category -->
+                <div class="assets-filter-field">
+
+                    <label for="assetCategory">
+                        Category
+                    </label>
+
+                    <select
+                        id="assetCategory"
+                        name="category"
+                    >
+
+                        <option value="">
+                            Filter
+                        </option>
+
+                        <option
+                            value="Balls"
+                            {% if selected_category == "Balls" %}
+                                selected
+                            {% endif %}
+                        >
+                            Balls
+                        </option>
+
+                        <option
+                            value="Bibs"
+                            {% if selected_category == "Bibs" %}
+                                selected
+                            {% endif %}
+                        >
+                            Bibs
+                        </option>
+
+                        <option
+                            value="Cones"
+                            {% if selected_category == "Cones" %}
+                                selected
+                            {% endif %}
+                        >
+                            Cones
+                        </option>
+
+                        <option
+                            value="Gear"
+                            {% if selected_category == "Gear" %}
+                                selected
+                            {% endif %}
+                        >
+                            Gear
+                        </option>
+
+                        <option
+                            value="Equipment"
+                            {% if selected_category == "Equipment" %}
+                                selected
+                            {% endif %}
+                        >
+                            Equipment
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- Condition -->
+                <div class="assets-filter-field">
+
+                    <label for="assetCondition">
+                        Condition
+                    </label>
+
+                    <select
+                        id="assetCondition"
+                        name="condition"
+                    >
+
+                        <option value="">
+                            Filter
+                        </option>
+
+                        <option
+                            value="Good"
+                            {% if selected_condition == "Good" %}
+                                selected
+                            {% endif %}
+                        >
+                            Good
+                        </option>
+
+                        <option
+                            value="Needs Review"
+                            {% if selected_condition == "Needs Review" %}
+                                selected
+                            {% endif %}
+                        >
+                            Needs Review
+                        </option>
+
+                        <option
+                            value="Damaged"
+                            {% if selected_condition == "Damaged" %}
+                                selected
+                            {% endif %}
+                        >
+                            Damaged
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- Availability -->
+                <div class="assets-filter-field">
+
+                    <label for="assetAvailability">
+                        Availability
+                    </label>
+
+                    <select
+                        id="assetAvailability"
+                        name="availability"
+                    >
+
+                        <option value="">
+                            Filter
+                        </option>
+
+                        <option
+                            value="Available"
+                            {% if selected_availability == "Available" %}
+                                selected
+                            {% endif %}
+                        >
+                            Available
+                        </option>
+
+                        <option
+                            value="In use"
+                            {% if selected_availability == "In use" %}
+                                selected
+                            {% endif %}
+                        >
+                            In use
+                        </option>
+
+                        <option
+                            value="Unavailable"
+                            {% if selected_availability == "Unavailable" %}
+                                selected
+                            {% endif %}
+                        >
+                            Unavailable
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- Search button -->
+                <button
+                    type="submit"
+                    class="assets-search-button"
+                >
+                    Search
+                </button>
+
+            </form>
+
+
+            <!-- Add Asset button -->
+            {% if session["role"] == "Admin" %}
+
+                <button
+                    type="button"
+                    class="add-asset-button"
+                    onclick="openAssetModal()"
+                >
+                    Add Asset
+                </button>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- Assets table -->
+        <section class="assets-table-card">
+
+            <div class="assets-table-wrapper">
+
+                <table class="assets-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Name</th>
+
+                            <th>Category</th>
+
+                            <th>Condition</th>
+
+                            <th>Availability</th>
+
+                            <th>Allocated to</th>
+
+                            <th>Actions</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for asset in assets %}
+
+                            <tr>
+
+                                <td>
+                                    {{ asset["name"] }}
+                                </td>
+
+                                <td>
+                                    {{ asset["category"] }}
+                                </td>
+
+                                <td>
+
+                                    <span
+                                        class="
+                                            asset-condition
+
+                                            {% if asset['condition'] == 'Good' %}
+                                                asset-condition-good
+
+                                            {% elif asset['condition'] == 'Needs Review' %}
+                                                asset-condition-review
+
+                                            {% elif asset['condition'] == 'Damaged' %}
+                                                asset-condition-damaged
+                                            {% endif %}
+                                        "
+                                    >
+                                        {{ asset["condition"] }}
+                                    </span>
+
+                                </td>
+
+                                <td>
+
+                                    <span
+                                        class="
+                                            asset-availability
+
+                                            {% if asset['availability'] == 'Available' %}
+                                                asset-available
+
+                                            {% elif asset['availability'] == 'In use' %}
+                                                asset-in-use
+
+                                            {% elif asset['availability'] == 'Unavailable' %}
+                                                asset-unavailable
+                                            {% endif %}
+                                        "
+                                    >
+                                        {{ asset["availability"] }}
+                                    </span>
+
+                                </td>
+
+                                <td>
+                                    {{ asset["allocated_to"] }}
+                                </td>
+
+                                <td>
+
+                                    {% if session["role"] == "Admin" %}
+
+                                        <button
+                                            type="button"
+                                            class="asset-action-button"
+                                            onclick="openEditAssetModal(
+                                                '{{ asset['asset_id'] }}',
+                                                '{{ asset['name']|e }}',
+                                                '{{ asset['category']|e }}',
+                                                '{{ asset['condition']|e }}',
+                                                '{{ asset['availability']|e }}',
+                                                '{{ asset['allocated_to']|default('', true)|e }}'
+                                            )"
+                                        >
+                                            Edit
+                                        </button>
+
+                                    {% else %}
+
+                                        <button
+                                            type="button"
+                                            class="asset-action-button"
+                                            onclick="openViewAssetModal(
+                                                '{{ asset['asset_id'] }}',
+                                                '{{ asset['name']|e }}',
+                                                '{{ asset['category']|e }}',
+                                                '{{ asset['condition']|e }}',
+                                                '{{ asset['availability']|e }}',
+                                                '{{ asset['allocated_to']|default('', true)|e }}'
+                                            )"
+                                        >
+                                            View
+                                        </button>
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+
+                        {% else %}
+
+                            <tr>
+
+                                <td
+                                    colspan="6"
+                                    class="assets-empty-state"
+                                >
+                                    No assets were found.
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- Add Asset Modal -->
+{% if session["role"] == "Admin" %}
+
+<div
+    id="assetModal"
+    class="asset-modal"
+>
+
+    <div class="asset-modal-content">
+
+        <button
+            type="button"
+            class="asset-modal-close"
+            onclick="closeAssetModal()"
+        >
+            &times;
+        </button>
+
+        <h2>Add Asset</h2>
+
+        <form
+            method="POST"
+            action="{{ url_for('add_asset') }}"
+            class="asset-form"
+        >
+
+            <div class="asset-form-grid">
+
+                <div class="asset-form-field">
+
+                    <label for="assetName">
+                        Asset Name
+                    </label>
+
+                    <input
+                        id="assetName"
+                        type="text"
+                        name="name"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="asset-form-field">
+
+                    <label for="assetCategoryInput">
+                        Category
+                    </label>
+
+                    <select
+                        id="assetCategoryInput"
+                        name="category"
+                        required
+                    >
+
+                        <option value="">
+                            Select Category
+                        </option>
+
+                        <option value="Balls">
+                            Balls
+                        </option>
+
+                        <option value="Bibs">
+                            Bibs
+                        </option>
+
+                        <option value="Cones">
+                            Cones
+                        </option>
+
+                        <option value="Gear">
+                            Gear
+                        </option>
+
+                        <option value="Equipment">
+                            Equipment
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="asset-form-field">
+
+                    <label for="assetConditionInput">
+                        Condition
+                    </label>
+
+                    <select
+                        id="assetConditionInput"
+                        name="condition"
+                        required
+                    >
+
+                        <option value="Good">
+                            Good
+                        </option>
+
+                        <option value="Needs Review">
+                            Needs Review
+                        </option>
+
+                        <option value="Damaged">
+                            Damaged
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="asset-form-field">
+
+                    <label for="assetAvailabilityInput">
+                        Availability
+                    </label>
+
+                    <select
+                        id="assetAvailabilityInput"
+                        name="availability"
+                        required
+                    >
+
+                        <option value="Available">
+                            Available
+                        </option>
+
+                        <option value="In use">
+                            In use
+                        </option>
+
+                        <option value="Unavailable">
+                            Unavailable
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="asset-form-field asset-full-width-field">
+
+                    <label for="assetAllocatedTo">
+                        Allocated To
+                    </label>
+
+                    <input
+                        id="assetAllocatedTo"
+                        type="text"
+                        name="allocated_to"
+                        placeholder="Example: U16 Boys or Main Pitch"
+                    >
+
+                </div>
+
+            </div>
+
+            <button
+                type="submit"
+                class="save-asset-button"
+            >
+                Save Asset
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- Edit Asset Modal -->
+<div
+    id="editAssetModal"
+    class="asset-modal"
+>
+
+    <div class="asset-modal-content">
+
+        <button
+            type="button"
+            class="asset-modal-close"
+            onclick="closeEditAssetModal()"
+        >
+            &times;
+        </button>
+
+        <h2>Edit Asset</h2>
+
+        <form
+            id="editAssetForm"
+            method="POST"
+            class="asset-form"
+        >
+
+            <div class="asset-form-grid">
+
+                <div class="asset-form-field">
+
+                    <label for="editAssetName">
+                        Asset Name
+                    </label>
+
+                    <input
+                        id="editAssetName"
+                        type="text"
+                        name="name"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="asset-form-field">
+
+                    <label for="editAssetCategory">
+                        Category
+                    </label>
+
+                    <select
+                        id="editAssetCategory"
+                        name="category"
+                        required
+                    >
+
+                        <option value="Balls">
+                            Balls
+                        </option>
+
+                        <option value="Bibs">
+                            Bibs
+                        </option>
+
+                        <option value="Cones">
+                            Cones
+                        </option>
+
+                        <option value="Gear">
+                            Gear
+                        </option>
+
+                        <option value="Equipment">
+                            Equipment
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="asset-form-field">
+
+                    <label for="editAssetCondition">
+                        Condition
+                    </label>
+
+                    <select
+                        id="editAssetCondition"
+                        name="condition"
+                        required
+                    >
+
+                        <option value="Good">
+                            Good
+                        </option>
+
+                        <option value="Needs Review">
+                            Needs Review
+                        </option>
+
+                        <option value="Damaged">
+                            Damaged
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="asset-form-field">
+
+                    <label for="editAssetAvailability">
+                        Availability
+                    </label>
+
+                    <select
+                        id="editAssetAvailability"
+                        name="availability"
+                        required
+                    >
+
+                        <option value="Available">
+                            Available
+                        </option>
+
+                        <option value="In use">
+                            In use
+                        </option>
+
+                        <option value="Unavailable">
+                            Unavailable
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="asset-form-field asset-full-width-field">
+
+                    <label for="editAssetAllocatedTo">
+                        Allocated To
+                    </label>
+
+                    <input
+                        id="editAssetAllocatedTo"
+                        type="text"
+                        name="allocated_to"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="save-asset-button"
+            >
+                Save Changes
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endif %}
+
+
+<!-- View Asset Modal -->
+<div
+    id="viewAssetModal"
+    class="asset-modal"
+>
+
+    <div class="asset-modal-content">
+
+        <button
+            type="button"
+            class="asset-modal-close"
+            onclick="closeViewAssetModal()"
+        >
+            &times;
+        </button>
+
+        <h2>Asset Details</h2>
+
+        <div class="asset-view-grid">
+
+            <div>
+                <span>Name</span>
+                <strong id="viewAssetName"></strong>
+            </div>
+
+            <div>
+                <span>Category</span>
+                <strong id="viewAssetCategory"></strong>
+            </div>
+
+            <div>
+                <span>Condition</span>
+                <strong id="viewAssetCondition"></strong>
+            </div>
+
+            <div>
+                <span>Availability</span>
+                <strong id="viewAssetAvailability"></strong>
+            </div>
+
+            <div class="asset-full-width-field">
+                <span>Allocated To</span>
+                <strong id="viewAssetAllocatedTo"></strong>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    function openAssetModal() {
+
+        const modal = document.getElementById(
+            "assetModal"
+        );
+
+        if (modal) {
+            modal.style.display = "flex";
+        }
+
+    }
+
+
+    function closeAssetModal() {
+
+        const modal = document.getElementById(
+            "assetModal"
+        );
+
+        if (modal) {
+            modal.style.display = "none";
+        }
+
+    }
+
+
+    function openEditAssetModal(
+        assetId,
+        name,
+        category,
+        condition,
+        availability,
+        allocatedTo
+    ) {
+
+        document.getElementById(
+            "editAssetName"
+        ).value = name;
+
+        document.getElementById(
+            "editAssetCategory"
+        ).value = category;
+
+        document.getElementById(
+            "editAssetCondition"
+        ).value = condition;
+
+        document.getElementById(
+            "editAssetAvailability"
+        ).value = availability;
+
+        document.getElementById(
+            "editAssetAllocatedTo"
+        ).value = allocatedTo;
+
+
+        document.getElementById(
+            "editAssetForm"
+        ).action = "/assets/edit/" + assetId;
+
+
+        document.getElementById(
+            "editAssetModal"
+        ).style.display = "flex";
+
+    }
+
+
+    function closeEditAssetModal() {
+
+        const modal = document.getElementById(
+            "editAssetModal"
+        );
+
+        if (modal) {
+            modal.style.display = "none";
+        }
+
+    }
+
+
+    function openViewAssetModal(
+        assetId,
+        name,
+        category,
+        condition,
+        availability,
+        allocatedTo
+    ) {
+
+        document.getElementById(
+            "viewAssetName"
+        ).textContent = name;
+
+        document.getElementById(
+            "viewAssetCategory"
+        ).textContent = category;
+
+        document.getElementById(
+            "viewAssetCondition"
+        ).textContent = condition;
+
+        document.getElementById(
+            "viewAssetAvailability"
+        ).textContent = availability;
+
+        document.getElementById(
+            "viewAssetAllocatedTo"
+        ).textContent =
+            allocatedTo || "Not allocated";
+
+
+        document.getElementById(
+            "viewAssetModal"
+        ).style.display = "flex";
+
+    }
+
+
+    function closeViewAssetModal() {
+
+        document.getElementById(
+            "viewAssetModal"
+        ).style.display = "none";
+
+    }
+
+
+    window.addEventListener(
+        "click",
+        function (event) {
+
+            const modals =
+                document.querySelectorAll(
+                    ".asset-modal"
+                );
+
+            modals.forEach(
+                function (modal) {
+
+                    if (event.target === modal) {
+                        modal.style.display = "none";
+                    }
+
+                }
+            );
+
+        }
+    );
+
+
+    window.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (event.key === "Escape") {
+
+                document.querySelectorAll(
+                    ".asset-modal"
+                ).forEach(
+                    function (modal) {
+                        modal.style.display = "none";
+                    }
+                );
+
+            }
+
+        }
+    );
+
+</script>
+
+</body>
+
+</html>
