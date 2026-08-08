@@ -532,6 +532,104 @@ if "updated_at" not in asset_columns:
     """)
 
 
+
+# =========================================================
+# Training Sessions Table
+# =========================================================
+# Stores training session information that
+# Admins and Coaches can manage and Viewers can read.
+
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS training_sessions (
+        session_id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        session_date TEXT NOT NULL,
+
+        team TEXT NOT NULL,
+
+        session_type TEXT NOT NULL
+            CHECK (
+                session_type IN (
+                    'Training',
+                    'Skills Session',
+                    'Fitness',
+                    'Tactical'
+                )
+            ),
+
+        session_time TEXT NOT NULL,
+
+        location TEXT NOT NULL,
+
+        coach_name TEXT NOT NULL,
+
+        created_by_user_id INTEGER,
+
+        created_at TEXT NOT NULL
+            DEFAULT CURRENT_TIMESTAMP,
+
+        updated_at TEXT NOT NULL
+            DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (created_by_user_id)
+            REFERENCES users(user_id)
+            ON DELETE SET NULL
+    )
+""")
+
+
+# =========================================================
+# Training Sessions Table Compatibility
+# =========================================================
+# Allows an older copy of clubsync.db to
+# receive newer training-session fields if required.
+
+cursor.execute(
+    "PRAGMA table_info(training_sessions)"
+)
+
+training_columns = {
+    column[1]
+    for column in cursor.fetchall()
+}
+
+
+if "created_by_user_id" not in training_columns:
+
+    cursor.execute("""
+        ALTER TABLE training_sessions
+        ADD COLUMN created_by_user_id INTEGER
+    """)
+
+
+if "created_at" not in training_columns:
+
+    cursor.execute("""
+        ALTER TABLE training_sessions
+        ADD COLUMN created_at TEXT
+    """)
+
+    cursor.execute("""
+        UPDATE training_sessions
+        SET created_at = CURRENT_TIMESTAMP
+        WHERE created_at IS NULL
+    """)
+
+
+if "updated_at" not in training_columns:
+
+    cursor.execute("""
+        ALTER TABLE training_sessions
+        ADD COLUMN updated_at TEXT
+    """)
+
+    cursor.execute("""
+        UPDATE training_sessions
+        SET updated_at = CURRENT_TIMESTAMP
+        WHERE updated_at IS NULL
+    """)
+
+
 # =========================================================
 # Dashboard Asset Count
 # =========================================================
@@ -651,6 +749,33 @@ cursor.execute("""
     index_assets_availability
 
     ON assets(availability)
+""")
+
+
+
+# Training Sessions
+
+cursor.execute("""
+    CREATE INDEX IF NOT EXISTS
+    index_training_session_date
+
+    ON training_sessions(session_date)
+""")
+
+
+cursor.execute("""
+    CREATE INDEX IF NOT EXISTS
+    index_training_team
+
+    ON training_sessions(team)
+""")
+
+
+cursor.execute("""
+    CREATE INDEX IF NOT EXISTS
+    index_training_type
+
+    ON training_sessions(session_type)
 """)
 
 
