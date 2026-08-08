@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>ClubSync Training Sessions</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+
+<div class="app-layout">
+
+    <!-- Navigation sidebar -->
+    <aside class="sidebar">
+
+        <h1>ClubSync</h1>
+
+        <nav>
+
+            <a href="{{ url_for('dashboard') }}">
+                Dashboard
+            </a>
+
+            <a href="{{ url_for('players') }}">
+                Players
+            </a>
+
+            <a href="{{ url_for('attendance') }}">
+                Attendance
+            </a>
+
+            <a href="{{ url_for('teams') }}">
+                Teams
+            </a>
+
+            <a href="{{ url_for('fees') }}">
+                Fees
+            </a>
+
+            <a href="{{ url_for('assets') }}">
+                Assets
+            </a>
+
+            <a
+                class="active"
+                href="{{ url_for('training') }}"
+            >
+                Training
+            </a>
+
+            <a href="{{ url_for('logout') }}">
+                Logout
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- Main Training content -->
+    <main class="main-content training-page">
+
+        <!-- Top bar -->
+        <div class="top-bar">
+
+            <div>
+                <h2>Training Sessions</h2>
+            </div>
+
+            <div class="user-box">
+                {{ session["role"] }}
+            </div>
+
+        </div>
+
+
+        <!-- Search / filter / add section -->
+        <section class="training-toolbar">
+
+            <form
+                method="GET"
+                action="{{ url_for('training') }}"
+                class="training-filter-form"
+            >
+
+                <!-- Team -->
+                <div class="training-filter-field">
+
+                    <label for="team">
+                        Team
+                    </label>
+
+                    <select
+                        id="team"
+                        name="team"
+                    >
+
+                        <option value="">
+                            All Teams
+                        </option>
+
+                        {% for team_record in teams %}
+
+                            <option
+                                value="{{ team_record['team'] }}"
+                                {% if selected_team == team_record['team'] %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ team_record["team"] }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- Session Type -->
+                <div class="training-filter-field">
+
+                    <label for="session_type">
+                        Session Type
+                    </label>
+
+                    <select
+                        id="session_type"
+                        name="session_type"
+                    >
+
+                        <option value="">
+                            All Types
+                        </option>
+
+                        <option
+                            value="Training"
+                            {% if selected_session_type == "Training" %}
+                                selected
+                            {% endif %}
+                        >
+                            Training
+                        </option>
+
+                        <option
+                            value="Skills Session"
+                            {% if selected_session_type == "Skills Session" %}
+                                selected
+                            {% endif %}
+                        >
+                            Skills Session
+                        </option>
+
+                        <option
+                            value="Fitness"
+                            {% if selected_session_type == "Fitness" %}
+                                selected
+                            {% endif %}
+                        >
+                            Fitness
+                        </option>
+
+                        <option
+                            value="Tactical"
+                            {% if selected_session_type == "Tactical" %}
+                                selected
+                            {% endif %}
+                        >
+                            Tactical
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- Date -->
+                <div class="training-filter-field">
+
+                    <label for="training_date">
+                        Date
+                    </label>
+
+                    <input
+                        id="training_date"
+                        type="date"
+                        name="training_date"
+                        value="{{ selected_date }}"
+                    >
+
+                </div>
+
+
+                <!-- Search -->
+                <button
+                    type="submit"
+                    class="training-search-button"
+                >
+                    Search
+                </button>
+
+
+                <!-- Clear -->
+                <a
+                    href="{{ url_for('training') }}"
+                    class="training-clear-button"
+                >
+                    Clear
+                </a>
+
+            </form>
+
+
+            <!-- Add Session -->
+            {% if session["role"] in ["Admin", "Coach"] %}
+
+                <button
+                    type="button"
+                    class="add-training-button"
+                    onclick="openTrainingModal()"
+                >
+                    Add Session
+                </button>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- Training table -->
+        <section class="training-table-card">
+
+            <div class="training-table-wrapper">
+
+                <table class="training-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>Date</th>
+                            <th>Team</th>
+                            <th>Session Type</th>
+                            <th>Time</th>
+                            <th>Location</th>
+                            <th>Coach</th>
+                            <th>Actions</th>
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for training_session in training_sessions %}
+
+                            <tr>
+
+                                <td>
+                                    {{ training_session["session_date"] }}
+                                </td>
+
+                                <td>
+                                    {{ training_session["team"] }}
+                                </td>
+
+                                <td>
+                                    {{ training_session["session_type"] }}
+                                </td>
+
+                                <td>
+                                    {{ training_session["session_time"] }}
+                                </td>
+
+                                <td>
+                                    {{ training_session["location"] }}
+                                </td>
+
+                                <td>
+                                    {{ training_session["coach_name"] }}
+                                </td>
+
+                                <td class="training-actions">
+
+                                    <button
+                                        type="button"
+                                        class="training-edit-button"
+                                        onclick="openEditTrainingModal(
+                                            '{{ training_session['session_id'] }}',
+                                            '{{ training_session['session_date'] }}',
+                                            '{{ training_session['team']|e }}',
+                                            '{{ training_session['session_type']|e }}',
+                                            '{{ training_session['session_time'] }}',
+                                            '{{ training_session['location']|e }}',
+                                            '{{ training_session['coach_name']|e }}'
+                                        )"
+                                    >
+                                        Edit
+                                    </button>
+
+
+                                    <form
+                                        method="POST"
+                                        action="{{ url_for(
+                                            'delete_training',
+                                            session_id=training_session['session_id']
+                                        ) }}"
+                                        class="training-delete-form"
+                                        onsubmit="return confirm(
+                                            'Are you sure you want to delete this training session?'
+                                        );"
+                                    >
+
+                                        <button
+                                            type="submit"
+                                            class="training-delete-button"
+                                        >
+                                            Delete
+                                        </button>
+
+                                    </form>
+
+                                </td>
+
+                            </tr>
+
+
+                        {% else %}
+
+                            <tr>
+
+                                <td
+                                    colspan="7"
+                                    class="training-empty-state"
+                                >
+                                    No training sessions were found.
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- Add Training Session Modal -->
+<div
+    id="trainingModal"
+    class="training-modal"
+>
+
+    <div class="training-modal-content">
+
+        <button
+            type="button"
+            class="training-modal-close"
+            onclick="closeTrainingModal()"
+        >
+            &times;
+        </button>
+
+        <h2>Add Training Session</h2>
+
+
+        <form
+            method="POST"
+            action="{{ url_for('add_training') }}"
+            class="training-form"
+        >
+
+            <div class="training-form-grid">
+
+
+                <!-- Date -->
+                <div class="training-form-field">
+
+                    <label for="sessionDate">
+                        Date
+                    </label>
+
+                    <input
+                        id="sessionDate"
+                        type="date"
+                        name="session_date"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- Team -->
+                <div class="training-form-field">
+
+                    <label for="sessionTeam">
+                        Team
+                    </label>
+
+                    <input
+                        id="sessionTeam"
+                        type="text"
+                        name="team"
+                        placeholder="Example: U16 Boys"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- Session Type -->
+                <div class="training-form-field">
+
+                    <label for="sessionType">
+                        Session Type
+                    </label>
+
+                    <select
+                        id="sessionType"
+                        name="session_type"
+                        required
+                    >
+
+                        <option value="">
+                            Select Type
+                        </option>
+
+                        <option value="Training">
+                            Training
+                        </option>
+
+                        <option value="Skills Session">
+                            Skills Session
+                        </option>
+
+                        <option value="Fitness">
+                            Fitness
+                        </option>
+
+                        <option value="Tactical">
+                            Tactical
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- Time -->
+                <div class="training-form-field">
+
+                    <label for="sessionTime">
+                        Time
+                    </label>
+
+                    <input
+                        id="sessionTime"
+                        type="time"
+                        name="session_time"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- Location -->
+                <div class="training-form-field">
+
+                    <label for="sessionLocation">
+                        Location
+                    </label>
+
+                    <input
+                        id="sessionLocation"
+                        type="text"
+                        name="location"
+                        placeholder="Example: Main Pitch"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- Coach -->
+                <div class="training-form-field">
+
+                    <label for="sessionCoach">
+                        Coach
+                    </label>
+
+                    <input
+                        id="sessionCoach"
+                        type="text"
+                        name="coach_name"
+                        value="{{ session.get('name', '') }}"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="save-training-button"
+            >
+                Save Training Session
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- Edit Training Session Modal -->
+<div
+    id="editTrainingModal"
+    class="training-modal"
+>
+
+    <div class="training-modal-content">
+
+        <button
+            type="button"
+            class="training-modal-close"
+            onclick="closeEditTrainingModal()"
+        >
+            &times;
+        </button>
+
+        <h2>Edit Training Session</h2>
+
+
+        <form
+            id="editTrainingForm"
+            method="POST"
+            class="training-form"
+        >
+
+            <div class="training-form-grid">
+
+
+                <div class="training-form-field">
+
+                    <label for="editSessionDate">
+                        Date
+                    </label>
+
+                    <input
+                        id="editSessionDate"
+                        type="date"
+                        name="session_date"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="training-form-field">
+
+                    <label for="editSessionTeam">
+                        Team
+                    </label>
+
+                    <input
+                        id="editSessionTeam"
+                        type="text"
+                        name="team"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="training-form-field">
+
+                    <label for="editSessionType">
+                        Session Type
+                    </label>
+
+                    <select
+                        id="editSessionType"
+                        name="session_type"
+                        required
+                    >
+
+                        <option value="Training">
+                            Training
+                        </option>
+
+                        <option value="Skills Session">
+                            Skills Session
+                        </option>
+
+                        <option value="Fitness">
+                            Fitness
+                        </option>
+
+                        <option value="Tactical">
+                            Tactical
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="training-form-field">
+
+                    <label for="editSessionTime">
+                        Time
+                    </label>
+
+                    <input
+                        id="editSessionTime"
+                        type="time"
+                        name="session_time"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="training-form-field">
+
+                    <label for="editSessionLocation">
+                        Location
+                    </label>
+
+                    <input
+                        id="editSessionLocation"
+                        type="text"
+                        name="location"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="training-form-field">
+
+                    <label for="editSessionCoach">
+                        Coach
+                    </label>
+
+                    <input
+                        id="editSessionCoach"
+                        type="text"
+                        name="coach_name"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="save-training-button"
+            >
+                Save Changes
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    function openTrainingModal() {
+
+        document.getElementById(
+            "trainingModal"
+        ).style.display = "flex";
+
+    }
+
+
+    function closeTrainingModal() {
+
+        document.getElementById(
+            "trainingModal"
+        ).style.display = "none";
+
+    }
+
+
+    function openEditTrainingModal(
+        sessionId,
+        sessionDate,
+        team,
+        sessionType,
+        sessionTime,
+        location,
+        coachName
+    ) {
+
+        document.getElementById(
+            "editSessionDate"
+        ).value = sessionDate;
+
+        document.getElementById(
+            "editSessionTeam"
+        ).value = team;
+
+        document.getElementById(
+            "editSessionType"
+        ).value = sessionType;
+
+        document.getElementById(
+            "editSessionTime"
+        ).value = sessionTime;
+
+        document.getElementById(
+            "editSessionLocation"
+        ).value = location;
+
+        document.getElementById(
+            "editSessionCoach"
+        ).value = coachName;
+
+
+        document.getElementById(
+            "editTrainingForm"
+        ).action =
+            "/training/edit/" + sessionId;
+
+
+        document.getElementById(
+            "editTrainingModal"
+        ).style.display = "flex";
+
+    }
+
+
+    function closeEditTrainingModal() {
+
+        document.getElementById(
+            "editTrainingModal"
+        ).style.display = "none";
+
+    }
+
+
+    window.addEventListener(
+        "click",
+        function (event) {
+
+            const modals =
+                document.querySelectorAll(
+                    ".training-modal"
+                );
+
+            modals.forEach(
+                function (modal) {
+
+                    if (event.target === modal) {
+                        modal.style.display = "none";
+                    }
+
+                }
+            );
+
+        }
+    );
+
+
+    window.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (event.key === "Escape") {
+
+                document.querySelectorAll(
+                    ".training-modal"
+                ).forEach(
+                    function (modal) {
+                        modal.style.display = "none";
+                    }
+                );
+
+            }
+
+        }
+    );
+
+</script>
+
+</body>
+
+</html>
