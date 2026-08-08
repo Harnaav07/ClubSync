@@ -171,57 +171,6 @@
 
 
 
-        <!-- Admin dashboard editing -->
-
-        {% if session["role"] == "Admin" %}
-
-        <form
-            method="POST"
-            class="edit-dashboard-form"
-        >
-
-            <h3>
-                Edit Dashboard Statistics
-            </h3>
-
-
-            <input
-                type="number"
-                name="attendance_records"
-                value="{{ stats['attendance_records'] }}"
-                min="0"
-                required
-            >
-
-
-            <input
-                type="number"
-                name="overdue_fees"
-                value="{{ stats['overdue_fees'] }}"
-                min="0"
-                required
-            >
-
-
-            <input
-                type="number"
-                name="club_assets"
-                value="{{ stats['club_assets'] }}"
-                min="0"
-                required
-            >
-
-
-            <button type="submit">
-                Update Dashboard
-            </button>
-
-        </form>
-
-        {% endif %}
-
-
-
         <!-- Dashboard lower sections -->
 
         <section class="dashboard-sections">
