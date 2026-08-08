@@ -1,20 +1,27 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+
     <title>ClubSync Dashboard</title>
 
     <link
         rel="stylesheet"
         href="{{ url_for('static', filename='css/style.css') }}"
     >
+
 </head>
+
 
 <body>
 
 <div class="app-layout">
 
+
     <!-- Navigation sidebar -->
+
     <aside class="sidebar">
+
         <h1>ClubSync</h1>
 
         <nav>
@@ -26,25 +33,31 @@
                 Dashboard
             </a>
 
+
             <a href="{{ url_for('players') }}">
                 Players
             </a>
+
 
             <a href="{{ url_for('attendance') }}">
                 Attendance
             </a>
 
+
             <a href="{{ url_for('teams') }}">
                 Teams
             </a>
+
 
             <a href="{{ url_for('fees') }}">
                 Fees
             </a>
 
-            <a href="#">
+
+            <a href="{{ url_for('assets') }}">
                 Assets
             </a>
+
 
             <a href="{{ url_for('logout') }}">
                 Logout
@@ -55,8 +68,11 @@
     </aside>
 
 
+
     <!-- Main dashboard content -->
+
     <main class="main-content">
+
 
         <div class="top-bar">
 
@@ -70,6 +86,7 @@
 
             </div>
 
+
             <div class="user-box">
                 {{ session["role"] }}
             </div>
@@ -77,7 +94,13 @@
         </div>
 
 
+
+        <!-- Dashboard summary cards -->
+
         <section class="summary-grid">
+
+
+            <!-- Total Players -->
 
             <a
                 href="{{ url_for('players') }}"
@@ -93,6 +116,9 @@
             </a>
 
 
+
+            <!-- Attendance Records -->
+
             <a
                 href="{{ url_for('attendance') }}"
                 class="summary-card summary-card-link"
@@ -106,6 +132,9 @@
 
             </a>
 
+
+
+            <!-- Overdue Fees -->
 
             <a
                 href="{{ url_for('fees') }}"
@@ -121,7 +150,13 @@
             </a>
 
 
-            <div class="summary-card">
+
+            <!-- Club Assets -->
+
+            <a
+                href="{{ url_for('assets') }}"
+                class="summary-card summary-card-link"
+            >
 
                 <h3>Club Assets</h3>
 
@@ -129,10 +164,14 @@
                     {{ stats["club_assets"] }}
                 </p>
 
-            </div>
+            </a>
+
 
         </section>
 
+
+
+        <!-- Admin dashboard editing -->
 
         {% if session["role"] == "Admin" %}
 
@@ -141,7 +180,10 @@
             class="edit-dashboard-form"
         >
 
-            <h3>Edit Dashboard Statistics</h3>
+            <h3>
+                Edit Dashboard Statistics
+            </h3>
+
 
             <input
                 type="number"
@@ -151,6 +193,7 @@
                 required
             >
 
+
             <input
                 type="number"
                 name="overdue_fees"
@@ -159,6 +202,7 @@
                 required
             >
 
+
             <input
                 type="number"
                 name="club_assets"
@@ -166,6 +210,7 @@
                 min="0"
                 required
             >
+
 
             <button type="submit">
                 Update Dashboard
@@ -176,18 +221,31 @@
         {% endif %}
 
 
+
+        <!-- Dashboard lower sections -->
+
         <section class="dashboard-sections">
+
+
+            <!-- Attendance History -->
 
             <div class="panel large-panel">
 
-                <h3>Attendance History</h3>
+                <h3>
+                    Attendance History
+                </h3>
+
 
                 <div class="fake-chart">
 
                     <div style="height: 45%;"></div>
+
                     <div style="height: 70%;"></div>
+
                     <div style="height: 55%;"></div>
+
                     <div style="height: 85%;"></div>
+
                     <div style="height: 65%;"></div>
 
                 </div>
@@ -195,25 +253,43 @@
             </div>
 
 
+
+            <!-- Overdue Fee Summary -->
+
             <div class="panel">
 
-                <h3>Overdue Fee Summary</h3>
+                <h3>
+                    Overdue Fee Summary
+                </h3>
+
 
                 <ul class="fee-list">
 
-                    <li>U14 Team - 3 unpaid</li>
-                    <li>U16 Team - 2 unpaid</li>
-                    <li>Senior Team - 4 unpaid</li>
+                    <li>
+                        U14 Team - 3 unpaid
+                    </li>
+
+                    <li>
+                        U16 Team - 2 unpaid
+                    </li>
+
+                    <li>
+                        Senior Team - 4 unpaid
+                    </li>
 
                 </ul>
 
             </div>
 
+
         </section>
 
+
     </main>
+
 
 </div>
 
 </body>
+
 </html>

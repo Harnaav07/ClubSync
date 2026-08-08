@@ -2777,3 +2777,52 @@ body {
         grid-column: auto;
     }
 }
+
+/* =========================================================
+   Assets Management - Coach Filter Layout Only
+   Admin Assets layout remains unchanged
+   ========================================================= */
+
+.assets-filter-card.coach-layout {
+    grid-template-columns: 1fr;
+    grid-template-areas: "form";
+}
+
+.assets-filter-card.coach-layout .assets-filter-form {
+    width: 100%;
+    grid-template-columns:
+        minmax(320px, 1.45fr)
+        minmax(190px, 1fr)
+        minmax(190px, 1fr)
+        minmax(190px, 1fr)
+        minmax(160px, 0.75fr);
+    gap: 18px;
+}
+
+.assets-filter-card.coach-layout .assets-filter-field input,
+.assets-filter-card.coach-layout .assets-filter-field select {
+    width: 100%;
+}
+
+.assets-filter-card.coach-layout .assets-search-button {
+    width: 100%;
+    min-width: 160px;
+}
+
+/* Responsive Coach Assets layout only */
+@media (max-width: 1200px) {
+    .assets-filter-card.coach-layout .assets-filter-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .assets-filter-card.coach-layout .assets-search-button {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 760px) {
+    .assets-filter-card.coach-layout .assets-filter-form {
+        grid-template-columns: 1fr;
+    }
+}

@@ -82,7 +82,7 @@
 
 
         <!-- Search and filter section -->
-        <section class="assets-filter-card">
+        <section class="assets-filter-card {% if session['role'] == 'Coach' %}coach-layout{% endif %}">
 
             <form
                 method="GET"
