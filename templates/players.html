@@ -177,7 +177,10 @@
                         <th>Team</th>
                         <th>Position</th>
                         <th>Status</th>
-                        <th>Actions</th>
+
+                        {% if session["role"] == "Admin" %}
+                            <th>Actions</th>
+                        {% endif %}
                     </tr>
                 </thead>
 
@@ -220,9 +223,9 @@
                             </span>
                         </td>
 
-                        <td class="player-actions">
+                        {% if session["role"] == "Admin" %}
 
-                                                        {% if session["role"] == "Admin" %}
+                        <td class="player-actions">
 
                             <button
                                 type="button"
@@ -263,22 +266,16 @@
                                 </button>
                             </form>
 
-                            {% else %}
-
-                            <span class="coach-view-label">
-                                View only
-                            </span>
-
-                            {% endif %}
-
                         </td>
+
+                        {% endif %}
                     </tr>
 
                     {% else %}
 
                     <tr>
                         <td
-                            colspan="7"
+                            colspan="{% if session['role'] == 'Admin' %}7{% else %}6{% endif %}"
                             class="empty-table-message"
                         >
                             No player records were found.
