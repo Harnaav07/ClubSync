@@ -1,7 +1,14 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>ClubSync Dashboard</title>
 
@@ -11,7 +18,6 @@
     >
 
 </head>
-
 
 <body>
 
@@ -57,6 +63,7 @@
             <a href="{{ url_for('assets') }}">
                 Assets
             </a>
+
 
             <a href="{{ url_for('training') }}">
                 Training
@@ -203,7 +210,7 @@
                         {% for record in attendance_history %}
 
                             <span>
-                                {{ record["attendance_date"] }}
+                                {{ record["attendance_date"][8:10] }}/{{ record["attendance_date"][5:7] }}/{{ record["attendance_date"][2:4] }}
                             </span>
 
                         {% endfor %}
@@ -240,11 +247,7 @@
                             <li>
                                 {{ fee_group["age_group"] }} Team -
                                 {{ fee_group["overdue_count"] }}
-                                {% if fee_group["overdue_count"] == 1 %}
-                                    unpaid
-                                {% else %}
-                                    unpaid
-                                {% endif %}
+                                unpaid
                             </li>
 
                         {% endfor %}
@@ -265,8 +268,151 @@
         </section>
 
 
-    </main>
 
+        <!-- Football-Data.org API Section -->
+
+        <section class="football-dashboard-section">
+
+            <div class="football-dashboard-header">
+
+                <p class="football-dashboard-label">
+                    Football-Data.org
+                </p>
+
+                <h3>
+                    Upcoming Football Fixtures
+                </h3>
+
+                <form
+                    method="GET"
+                    action="{{ url_for('dashboard') }}"
+                    class="football-competition-filter"
+                >
+
+                    <select
+                        name="competition"
+                        aria-label="Choose competition"
+                        onchange="this.form.submit()"
+                    >
+
+                        {% for code, name in football_competitions.items() %}
+
+                            <option
+                                value="{{ code }}"
+                                {% if selected_competition == code %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ name }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </form>
+
+            </div>
+
+
+            {% if football_matches %}
+
+                <div class="football-fixtures-grid">
+
+                    {% for match in football_matches %}
+
+                        <div class="football-fixture-card">
+
+
+                            <div class="football-fixture-date">
+
+                                {% if match["utcDate"] %}
+
+                                    {{ match["utcDate"][8:10] }}/{{ match["utcDate"][5:7] }}/{{ match["utcDate"][2:4] }}
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <div class="football-fixture-teams">
+
+
+                                <div class="football-team">
+
+                                    {% if match["homeTeam"]["crest"] %}
+
+                                        <img
+                                            src="{{ match['homeTeam']['crest'] }}"
+                                            alt="{{ match['homeTeam']['name'] }} crest"
+                                            class="football-team-crest"
+                                        >
+
+                                    {% endif %}
+
+                                    <span>
+                                        {{ match["homeTeam"]["name"] }}
+                                    </span>
+
+                                </div>
+
+
+                                <div class="football-versus">
+                                    VS
+                                </div>
+
+
+                                <div class="football-team">
+
+                                    {% if match["awayTeam"]["crest"] %}
+
+                                        <img
+                                            src="{{ match['awayTeam']['crest'] }}"
+                                            alt="{{ match['awayTeam']['name'] }} crest"
+                                            class="football-team-crest"
+                                        >
+
+                                    {% endif %}
+
+                                    <span>
+                                        {{ match["awayTeam"]["name"] }}
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="football-fixture-competition">
+
+                                {{ match["competition"]["name"] }}
+
+                            </div>
+
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+
+            <a
+                href="https://www.football-data.org/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="football-more-link"
+            >
+                View more fixtures on Football-Data.org ↗
+            </a>
+
+
+        </section>
+
+
+    </main>
 
 </div>
 

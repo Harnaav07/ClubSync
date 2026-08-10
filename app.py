@@ -1,6 +1,11 @@
+import os
 import sqlite3
 
-from datetime import date
+from datetime import date, timedelta
+
+import requests
+
+from dotenv import load_dotenv
 
 from flask import (
     Flask,
@@ -12,6 +17,20 @@ from flask import (
 )
 
 from werkzeug.security import check_password_hash
+
+
+
+# Environment Variables
+
+load_dotenv()
+
+FOOTBALL_DATA_API_KEY = os.getenv(
+    "FOOTBALL_DATA_API_KEY"
+)
+
+FOOTBALL_DATA_BASE_URL = (
+    "https://api.football-data.org/v4"
+)
 
 
 
@@ -297,6 +316,136 @@ def refresh_overdue_fee_dashboard(connection):
     ))
 
 
+# =========================================================
+# Football-Data.org API
+# =========================================================
+
+FOOTBALL_COMPETITIONS = {
+    "": "All Competitions",
+    "PL": "Premier League",
+    "CL": "Champions League",
+    "PD": "La Liga",
+    "BL1": "Bundesliga",
+    "SA": "Serie A",
+    "FL1": "Ligue 1"
+}
+
+
+def get_football_matches(
+    competition_code=""
+):
+    """Get upcoming football matches from Football-Data.org."""
+
+    if not FOOTBALL_DATA_API_KEY:
+
+        return [], (
+            "Football API token was not found. "
+            "Check the .env file."
+        )
+
+    if competition_code not in FOOTBALL_COMPETITIONS:
+        competition_code = ""
+
+    today = date.today()
+
+    date_from = today.isoformat()
+
+    date_to = (
+        today + timedelta(days=30)
+    ).isoformat()
+
+    # All Competitions uses the general matches resource.
+    # A selected competition uses that competition's
+    # dedicated match resource.
+    if competition_code:
+
+        url = (
+            f"{FOOTBALL_DATA_BASE_URL}"
+            f"/competitions/{competition_code}"
+            "/matches"
+        )
+
+    else:
+
+        url = (
+            f"{FOOTBALL_DATA_BASE_URL}"
+            "/matches"
+        )
+
+    headers = {
+        "X-Auth-Token":
+            FOOTBALL_DATA_API_KEY
+    }
+
+    parameters = {
+        "dateFrom": date_from,
+        "dateTo": date_to
+    }
+
+    try:
+
+        response = requests.get(
+            url,
+            headers=headers,
+            params=parameters,
+            timeout=10
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+        matches = data.get(
+            "matches",
+            []
+        )
+
+        upcoming_statuses = {
+            "SCHEDULED",
+            "TIMED"
+        }
+
+        upcoming_matches = [
+            match
+            for match in matches
+            if match.get("status")
+            in upcoming_statuses
+        ]
+
+        upcoming_matches.sort(
+            key=lambda match:
+                match.get("utcDate", "")
+        )
+
+        # Keep the Dashboard compact.
+        return upcoming_matches[:10], None
+
+    except requests.RequestException as error:
+
+        print(
+            "Football-Data.org API error:",
+            error
+        )
+
+        return [], (
+            "Football information is temporarily "
+            "unavailable."
+        )
+
+    except ValueError as error:
+
+        print(
+            "Football-Data.org JSON error:",
+            error
+        )
+
+        return [], (
+            "Football information is temporarily "
+            "unavailable."
+        )
+
+
+
 # Login
 
 
@@ -368,13 +517,31 @@ def dashboard():
         overdue_fee_summary
     ) = get_dashboard_data()
 
+    selected_competition = request.args.get(
+        "competition",
+        ""
+    ).strip()
+
+    if selected_competition not in FOOTBALL_COMPETITIONS:
+        selected_competition = ""
+
+    (
+        football_matches,
+        football_api_error
+    ) = get_football_matches(
+        selected_competition
+    )
+
     return render_template(
         "dashboard.html",
         stats=stats,
         attendance_history=attendance_history,
-        overdue_fee_summary=overdue_fee_summary
+        overdue_fee_summary=overdue_fee_summary,
+        football_matches=football_matches,
+        football_api_error=football_api_error,
+        football_competitions=FOOTBALL_COMPETITIONS,
+        selected_competition=selected_competition
     )
-
 
 
 # Player Management
