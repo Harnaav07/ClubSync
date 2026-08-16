@@ -4001,3 +4001,1157 @@ body {
     }
 
 }
+
+
+
+/* =========================================================
+   FINAL RESPONSIVE ADMIN ASSETS FILTER
+   Prevents Add Asset from being cropped on laptop screens.
+   Coach layout remains unchanged.
+   ========================================================= */
+
+@media (max-width: 1550px) {
+
+    .assets-filter-card.admin-layout {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "form"
+            "add";
+        gap: 18px;
+    }
+
+    .assets-filter-card.admin-layout .assets-filter-form {
+        width: 100%;
+        min-width: 0;
+        grid-template-columns:
+            minmax(220px, 1.45fr)
+            minmax(135px, 0.85fr)
+            minmax(135px, 0.85fr)
+            minmax(135px, 0.85fr)
+            110px;
+        gap: 14px;
+    }
+
+    .assets-filter-card.admin-layout .assets-search-button {
+        width: 110px;
+        min-width: 110px;
+    }
+
+    .assets-filter-card.admin-layout .add-asset-button {
+        width: 190px;
+        min-width: 190px;
+        justify-self: end;
+    }
+}
+
+@media (max-width: 1250px) {
+
+    .assets-filter-card.admin-layout .assets-filter-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .assets-filter-card.admin-layout .assets-search-button {
+        width: 100%;
+        min-width: 0;
+        height: 48px;
+    }
+
+    .assets-filter-card.admin-layout .add-asset-button {
+        width: 190px;
+        min-width: 190px;
+        justify-self: end;
+    }
+}
+
+@media (max-width: 760px) {
+
+    .assets-filter-card.admin-layout {
+        width: 100%;
+        margin-right: 0;
+        margin-left: 0;
+        padding: 18px;
+    }
+
+    .assets-filter-card.admin-layout .assets-filter-form {
+        grid-template-columns: 1fr;
+    }
+
+    .assets-filter-card.admin-layout .assets-search-button,
+    .assets-filter-card.admin-layout .add-asset-button {
+        width: 100%;
+        min-width: 0;
+        justify-self: stretch;
+    }
+}
+
+
+
+/* =========================================================
+   FINAL ASSETS FILTER LAYOUT
+   Matches the Fees page layout for consistency
+   ========================================================= */
+
+/* Main Admin layout:
+   First row = Search Assets / Category / Condition / Availability / Add Asset
+   Second row = Search / Clear
+*/
+.assets-filter-card.admin-layout {
+    display: grid;
+    width: calc(100% - 12px);
+    max-width: 100%;
+    grid-template-columns:
+        minmax(180px, 1.4fr)
+        minmax(125px, 0.8fr)
+        minmax(125px, 0.8fr)
+        minmax(125px, 0.8fr)
+        190px;
+    grid-template-areas:
+        "form form form form add";
+    gap: 14px 18px;
+    margin: 0 6px 32px;
+    padding: 20px 24px;
+    overflow: hidden;
+    border: 2px solid #d3d3d3;
+    border-radius: 24px;
+    background: #ffffff;
+}
+
+.assets-filter-card.admin-layout .assets-filter-form {
+    display: grid;
+    grid-area: form;
+    grid-template-columns:
+        minmax(180px, 1.4fr)
+        minmax(125px, 0.8fr)
+        minmax(125px, 0.8fr)
+        minmax(125px, 0.8fr);
+    grid-template-areas:
+        "search category condition availability"
+        "actions actions actions actions";
+    gap: 14px 18px;
+    width: 100%;
+    min-width: 0;
+}
+
+.assets-filter-card.admin-layout .assets-search-field {
+    grid-area: search;
+}
+
+.assets-filter-card.admin-layout
+.assets-filter-form > .assets-filter-field:nth-of-type(2) {
+    grid-area: category;
+}
+
+.assets-filter-card.admin-layout
+.assets-filter-form > .assets-filter-field:nth-of-type(3) {
+    grid-area: condition;
+}
+
+.assets-filter-card.admin-layout
+.assets-filter-form > .assets-filter-field:nth-of-type(4) {
+    grid-area: availability;
+}
+
+.assets-filter-card.admin-layout .assets-filter-actions {
+    display: flex;
+    grid-area: actions;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.assets-filter-card.admin-layout .assets-search-button,
+.assets-filter-card.admin-layout .assets-clear-button {
+    display: inline-flex;
+    width: 135px;
+    min-width: 135px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.assets-filter-card.admin-layout .assets-search-button {
+    border: none;
+    background: #073544;
+    color: #ffffff;
+}
+
+.assets-filter-card.admin-layout .assets-clear-button {
+    border: 2px solid #d2d2d2;
+    background: #f2f2f2;
+    color: #111111;
+}
+
+.assets-filter-card.admin-layout .assets-search-button:hover {
+    background: #1d6f91;
+}
+
+.assets-filter-card.admin-layout .assets-clear-button:hover {
+    background: #e7e7e7;
+}
+
+.assets-filter-card.admin-layout .add-asset-button {
+    width: 190px;
+    min-width: 190px;
+    height: 70px;
+    grid-area: add;
+    align-self: start;
+    justify-self: stretch;
+}
+
+
+/* Coach layout:
+   Same visual structure, but no Add Asset button.
+*/
+.assets-filter-card.coach-layout {
+    display: block;
+    width: calc(100% - 12px);
+    max-width: 100%;
+    margin: 0 6px 32px;
+    padding: 20px 24px;
+    overflow: hidden;
+    border: 2px solid #d3d3d3;
+    border-radius: 24px;
+    background: #ffffff;
+}
+
+.assets-filter-card.coach-layout .assets-filter-form {
+    display: grid;
+    width: 100%;
+    grid-template-columns:
+        minmax(180px, 1.4fr)
+        minmax(125px, 0.8fr)
+        minmax(125px, 0.8fr)
+        minmax(125px, 0.8fr);
+    grid-template-areas:
+        "search category condition availability"
+        "actions actions actions actions";
+    gap: 14px 18px;
+}
+
+.assets-filter-card.coach-layout .assets-search-field {
+    grid-area: search;
+}
+
+.assets-filter-card.coach-layout
+.assets-filter-form > .assets-filter-field:nth-of-type(2) {
+    grid-area: category;
+}
+
+.assets-filter-card.coach-layout
+.assets-filter-form > .assets-filter-field:nth-of-type(3) {
+    grid-area: condition;
+}
+
+.assets-filter-card.coach-layout
+.assets-filter-form > .assets-filter-field:nth-of-type(4) {
+    grid-area: availability;
+}
+
+.assets-filter-card.coach-layout .assets-filter-actions {
+    display: flex;
+    grid-area: actions;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.assets-filter-card.coach-layout .assets-search-button,
+.assets-filter-card.coach-layout .assets-clear-button {
+    display: inline-flex;
+    width: 135px;
+    min-width: 135px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.assets-filter-card.coach-layout .assets-search-button {
+    border: none;
+    background: #073544;
+    color: #ffffff;
+}
+
+.assets-filter-card.coach-layout .assets-clear-button {
+    border: 2px solid #d2d2d2;
+    background: #f2f2f2;
+    color: #111111;
+}
+
+.assets-filter-card.coach-layout .assets-search-button:hover {
+    background: #1d6f91;
+}
+
+.assets-filter-card.coach-layout .assets-clear-button:hover {
+    background: #e7e7e7;
+}
+
+
+/* Responsive Assets filter layout */
+
+@media (max-width: 1250px) {
+
+    .assets-filter-card.admin-layout {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+            "form form"
+            "add add";
+    }
+
+    .assets-filter-card.admin-layout .assets-filter-form,
+    .assets-filter-card.coach-layout .assets-filter-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+            "search category"
+            "condition availability"
+            "actions actions";
+    }
+
+    .assets-filter-card.admin-layout .add-asset-button {
+        width: 190px;
+        min-width: 190px;
+        justify-self: start;
+    }
+}
+
+@media (max-width: 650px) {
+
+    .assets-filter-card.admin-layout,
+    .assets-filter-card.coach-layout {
+        width: 100%;
+        margin-right: 0;
+        margin-left: 0;
+        padding: 18px;
+    }
+
+    .assets-filter-card.admin-layout .assets-filter-form,
+    .assets-filter-card.coach-layout .assets-filter-form {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "search"
+            "category"
+            "condition"
+            "availability"
+            "actions";
+    }
+
+    .assets-filter-card.admin-layout .assets-filter-actions,
+    .assets-filter-card.coach-layout .assets-filter-actions {
+        flex-direction: row;
+    }
+
+    .assets-filter-card.admin-layout .assets-search-button,
+    .assets-filter-card.admin-layout .assets-clear-button,
+    .assets-filter-card.coach-layout .assets-search-button,
+    .assets-filter-card.coach-layout .assets-clear-button {
+        width: 135px;
+        min-width: 135px;
+    }
+
+    .assets-filter-card.admin-layout .add-asset-button {
+        width: 100%;
+        min-width: 0;
+        justify-self: stretch;
+    }
+}
+
+
+
+/* =========================================================
+   FINAL ADD ASSET ALIGNMENT
+   Aligns the Admin Add Asset button with filter controls
+   ========================================================= */
+
+.assets-filter-card.admin-layout .add-asset-button {
+    align-self: start;
+    margin-top: 25px;
+    height: 70px;
+}
+
+
+
+/* =========================================================
+   FINAL TRAINING FILTER LAYOUT
+   Matches Fees and Assets for a consistent ClubSync layout
+   ========================================================= */
+
+/* Desktop and normal laptop layout:
+   Row 1: Team / Session Type / Date / Add Session
+   Row 2: Search / Clear
+*/
+.training-toolbar {
+    display: grid;
+    width: calc(100% - 12px);
+    max-width: 100%;
+    grid-template-columns:
+        minmax(170px, 1fr)
+        minmax(170px, 1fr)
+        minmax(170px, 1fr)
+        190px;
+    grid-template-areas:
+        "form form form add";
+    align-items: start;
+    gap: 14px 18px;
+    margin: 0 6px 32px;
+    padding: 20px 24px;
+    overflow: hidden;
+    border: 2px solid #d3d3d3;
+    border-radius: 24px;
+    background: #ffffff;
+}
+
+.training-filter-form {
+    display: grid;
+    grid-area: form;
+    width: 100%;
+    min-width: 0;
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+        "team type date"
+        "actions actions actions";
+    align-items: end;
+    gap: 14px 18px;
+}
+
+.training-filter-form > .training-filter-field:nth-of-type(1) {
+    grid-area: team;
+}
+
+.training-filter-form > .training-filter-field:nth-of-type(2) {
+    grid-area: type;
+}
+
+.training-filter-form > .training-filter-field:nth-of-type(3) {
+    grid-area: date;
+}
+
+.training-filter-field {
+    min-width: 0;
+}
+
+.training-filter-field input,
+.training-filter-field select {
+    width: 100%;
+    min-width: 0;
+}
+
+.training-filter-actions {
+    display: flex;
+    grid-area: actions;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.training-search-button,
+.training-clear-button {
+    display: inline-flex;
+    width: 135px;
+    min-width: 135px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.training-search-button {
+    border: none;
+    background: #073544;
+    color: #ffffff;
+}
+
+.training-clear-button {
+    border: 2px solid #d2d2d2;
+    background: #f2f2f2;
+    color: #111111;
+}
+
+.training-search-button:hover {
+    background: #1d6f91;
+}
+
+.training-clear-button:hover {
+    background: #e7e7e7;
+}
+
+/* Align Add Session with the filter input boxes. */
+.add-training-button {
+    width: 190px;
+    min-width: 190px;
+    height: 70px;
+    grid-area: add;
+    align-self: start;
+    justify-self: stretch;
+    margin-top: 25px;
+}
+
+
+/* Medium screens:
+   Keep the controls neat without cropping. */
+@media (max-width: 1100px) {
+
+    .training-toolbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+            "form form"
+            "add add";
+    }
+
+    .training-filter-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+            "team type"
+            "date date"
+            "actions actions";
+    }
+
+    .add-training-button {
+        width: 190px;
+        min-width: 190px;
+        justify-self: start;
+        margin-top: 0;
+    }
+}
+
+
+/* Small screens:
+   Stack controls so the page never overflows. */
+@media (max-width: 650px) {
+
+    .training-toolbar {
+        width: 100%;
+        margin-right: 0;
+        margin-left: 0;
+        padding: 18px;
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "form"
+            "add";
+    }
+
+    .training-filter-form {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "team"
+            "type"
+            "date"
+            "actions";
+    }
+
+    .training-filter-actions {
+        flex-direction: row;
+    }
+
+    .training-search-button,
+    .training-clear-button {
+        width: 135px;
+        min-width: 135px;
+    }
+
+    .add-training-button {
+        width: 100%;
+        min-width: 0;
+        justify-self: stretch;
+        margin-top: 0;
+    }
+}
+
+
+
+/* =========================================================
+   FINAL PLAYER FILTER LAYOUT
+   Matches Fees, Assets and Training
+   ========================================================= */
+
+.players-toolbar {
+    display: grid;
+    width: calc(100% - 12px);
+    max-width: 100%;
+    gap: 14px 18px;
+    margin: 0 6px 32px;
+    padding: 20px 24px;
+    overflow: hidden;
+    border: 2px solid #d3d3d3;
+    border-radius: 24px;
+    background: #ffffff;
+}
+
+.players-toolbar.admin-layout {
+    grid-template-columns:
+        minmax(180px, 1.4fr)
+        minmax(125px, 0.8fr)
+        minmax(125px, 0.8fr)
+        190px;
+    grid-template-areas:
+        "form form form add";
+    align-items: start;
+}
+
+.players-toolbar.coach-layout {
+    display: block;
+}
+
+.player-search-form {
+    display: grid;
+    grid-area: form;
+    width: 100%;
+    min-width: 0;
+    grid-template-columns:
+        minmax(180px, 1.4fr)
+        minmax(125px, 0.8fr)
+        minmax(125px, 0.8fr);
+    grid-template-areas:
+        "search age team"
+        "actions actions actions";
+    gap: 14px 18px;
+    align-items: end;
+}
+
+.players-toolbar.coach-layout .player-search-form {
+    grid-template-columns:
+        minmax(180px, 1.4fr)
+        minmax(125px, 0.8fr)
+        minmax(125px, 0.8fr);
+}
+
+.player-filter-field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.player-search-field {
+    grid-area: search;
+}
+
+.player-search-form > .player-filter-field:nth-of-type(2) {
+    grid-area: age;
+}
+
+.player-search-form > .player-filter-field:nth-of-type(3) {
+    grid-area: team;
+}
+
+.player-filter-field label {
+    margin: 0 0 6px 10px;
+    color: #111111;
+    font-size: 17px;
+    font-weight: 400;
+}
+
+.player-filter-field input,
+.player-filter-field select {
+    width: 100%;
+    height: 70px;
+    min-width: 0;
+    border: 2px solid #d2d2d2;
+    border-radius: 14px;
+    padding: 0 18px;
+    background: #ffffff;
+    color: #111111;
+    font: inherit;
+    font-size: 18px;
+}
+
+.player-filter-field select {
+    text-align: center;
+    text-align-last: center;
+}
+
+.player-filter-field input:focus,
+.player-filter-field select:focus {
+    border-color: #1d6f91;
+    outline: 3px solid rgba(29, 111, 145, 0.14);
+}
+
+.player-filter-actions {
+    display: flex;
+    grid-area: actions;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.player-search-button,
+.clear-filter-button {
+    display: inline-flex;
+    width: 135px;
+    min-width: 135px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.player-search-button {
+    border: none;
+    background: #073544;
+    color: #ffffff;
+}
+
+.clear-filter-button {
+    border: 2px solid #d2d2d2;
+    background: #f2f2f2;
+    color: #111111;
+}
+
+.player-search-button:hover {
+    background: #1d6f91;
+}
+
+.clear-filter-button:hover {
+    background: #e7e7e7;
+}
+
+.players-toolbar.admin-layout .add-player-button {
+    width: 190px;
+    min-width: 190px;
+    height: 70px;
+    grid-area: add;
+    align-self: start;
+    justify-self: stretch;
+    margin-top: 28px;
+    border: none;
+    border-radius: 14px;
+    padding: 0 18px;
+    background: #f28c28;
+    color: #ffffff;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.players-toolbar.admin-layout .add-player-button:hover {
+    background: #dc7a1b;
+}
+
+
+/* Medium screens */
+@media (max-width: 1100px) {
+
+    .players-toolbar.admin-layout {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+            "form form"
+            "add add";
+    }
+
+    .player-search-form,
+    .players-toolbar.coach-layout .player-search-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+            "search age"
+            "team team"
+            "actions actions";
+    }
+
+    .players-toolbar.admin-layout .add-player-button {
+        width: 190px;
+        min-width: 190px;
+        justify-self: start;
+        margin-top: 0;
+    }
+}
+
+
+/* Small screens */
+@media (max-width: 650px) {
+
+    .players-toolbar {
+        width: 100%;
+        margin-right: 0;
+        margin-left: 0;
+        padding: 18px;
+    }
+
+    .players-toolbar.admin-layout {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "form"
+            "add";
+    }
+
+    .player-search-form,
+    .players-toolbar.coach-layout .player-search-form {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "search"
+            "age"
+            "team"
+            "actions";
+    }
+
+    .player-filter-actions {
+        flex-direction: row;
+    }
+
+    .player-search-button,
+    .clear-filter-button {
+        width: 135px;
+        min-width: 135px;
+    }
+
+    .players-toolbar.admin-layout .add-player-button {
+        width: 100%;
+        min-width: 0;
+        justify-self: stretch;
+        margin-top: 0;
+    }
+}
+
+
+
+/* =========================================================
+   FINAL PLAYERS TOOLBAR ALIGNMENT
+   Same layout as Assets and Training
+   ========================================================= */
+
+.players-toolbar.admin-layout {
+    grid-template-columns:
+        minmax(0, 1.35fr)
+        minmax(0, 0.85fr)
+        minmax(0, 0.85fr)
+        190px;
+    grid-template-areas: "form form form add";
+    align-items: start;
+}
+
+.player-search-form {
+    grid-template-columns:
+        minmax(0, 1.35fr)
+        minmax(0, 0.85fr)
+        minmax(0, 0.85fr);
+    align-items: start;
+}
+
+.player-filter-field {
+    min-width: 0;
+}
+
+.player-filter-field label {
+    display: block;
+    margin: 0 0 6px 10px;
+    line-height: 22px;
+}
+
+.player-filter-field input,
+.player-filter-field select {
+    display: block;
+    width: 100%;
+    height: 70px;
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
+    padding: 0 18px;
+    border: 2px solid #d2d2d2;
+    border-radius: 14px;
+    background: #ffffff;
+    font: inherit;
+    font-size: 18px;
+    line-height: normal;
+}
+
+.player-search-field input {
+    text-align: left;
+}
+
+.player-filter-field select {
+    text-align: center;
+    text-align-last: center;
+}
+
+.player-filter-actions {
+    margin-top: 4px;
+}
+
+.players-toolbar.admin-layout .add-player-button {
+    width: 190px;
+    min-width: 190px;
+    height: 70px;
+    margin-top: 28px;
+    align-self: start;
+    justify-self: stretch;
+    border: none;
+    border-radius: 14px;
+    background: #2b8424;
+    color: #ffffff;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.players-toolbar.admin-layout .add-player-button:hover {
+    background: #236d1e;
+}
+
+@media (max-width: 1100px) {
+    .players-toolbar.admin-layout {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+            "form form"
+            "add add";
+    }
+
+    .player-search-form,
+    .players-toolbar.coach-layout .player-search-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+            "search age"
+            "team team"
+            "actions actions";
+    }
+
+    .players-toolbar.admin-layout .add-player-button {
+        width: 190px;
+        min-width: 190px;
+        margin-top: 0;
+        justify-self: start;
+    }
+}
+
+@media (max-width: 650px) {
+    .players-toolbar.admin-layout {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "form"
+            "add";
+    }
+
+    .player-search-form,
+    .players-toolbar.coach-layout .player-search-form {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "search"
+            "age"
+            "team"
+            "actions";
+    }
+
+    .players-toolbar.admin-layout .add-player-button {
+        width: 100%;
+        min-width: 0;
+        margin-top: 0;
+        justify-self: stretch;
+    }
+}
+
+
+
+/* =========================================================
+   FINAL PLAYER SEARCH AND CLEAR BUTTON STYLE
+   Matches the Assets page
+   ========================================================= */
+
+.player-filter-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 18px;
+    margin-top: 8px;
+}
+
+.player-search-button,
+.clear-filter-button {
+    display: inline-flex;
+    width: 205px;
+    min-width: 205px;
+    height: 72px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    border-radius: 14px;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.player-search-button {
+    border: none;
+    background: #073544;
+    color: #ffffff;
+}
+
+.clear-filter-button {
+    border: 2px solid #d2d2d2;
+    background: #f2f2f2;
+    color: #111111;
+}
+
+.player-search-button:hover {
+    background: #1d6f91;
+}
+
+.clear-filter-button:hover {
+    background: #e7e7e7;
+}
+
+/* Keep the buttons responsive on very small screens */
+@media (max-width: 650px) {
+    .player-filter-actions {
+        width: 100%;
+        gap: 12px;
+    }
+
+    .player-search-button,
+    .clear-filter-button {
+        width: 100%;
+        min-width: 0;
+        flex: 1;
+    }
+}
+
+
+
+/* =========================================================
+   FINAL PLAYER SEARCH BUTTON FIX
+   Match Assets / Fees / Training button layout exactly
+   ========================================================= */
+
+.player-filter-actions {
+    display: flex;
+    grid-area: actions;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.player-search-button,
+.clear-filter-button {
+    display: inline-flex;
+    width: 135px;
+    min-width: 135px;
+    height: 48px;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.player-search-button {
+    border: none;
+    background: #073544;
+    color: #ffffff;
+}
+
+.clear-filter-button {
+    border: 2px solid #d2d2d2;
+    background: #f2f2f2;
+    color: #111111;
+}
+
+.player-search-button:hover {
+    background: #1d6f91;
+}
+
+.clear-filter-button:hover {
+    background: #e7e7e7;
+}
+
+@media (max-width: 650px) {
+
+    .player-filter-actions {
+        width: 100%;
+        gap: 12px;
+    }
+
+    .player-search-button,
+    .clear-filter-button {
+        width: 135px;
+        min-width: 135px;
+        flex: 0 0 135px;
+    }
+}
+
+
+
+/* =========================================================
+   FINAL PLAYER SEARCH FIELD FIX
+   Make Search Player input match the other filter boxes
+   ========================================================= */
+
+.players-toolbar .player-search-field input {
+    display: block;
+    width: 100%;
+    height: 70px !important;
+    min-height: 70px !important;
+    max-height: 70px !important;
+
+    margin: 0 !important;
+    padding: 0 18px !important;
+
+    border: 2px solid #d2d2d2 !important;
+    border-radius: 14px !important;
+
+    background: #ffffff;
+    color: #111111;
+
+    font: inherit;
+    font-size: 18px;
+
+    line-height: normal;
+    box-sizing: border-box;
+}
+
+.players-toolbar .player-search-field input:focus {
+    border-color: #1d6f91 !important;
+    outline: 3px solid rgba(29, 111, 145, 0.14);
+}

@@ -86,7 +86,7 @@
 
 
         <!-- Search and filter section -->
-        <section class="assets-filter-card {% if session['role'] == 'Coach' %}coach-layout{% endif %}">
+        <section class="assets-filter-card {% if session['role'] == 'Coach' %}coach-layout{% elif session['role'] == 'Admin' %}admin-layout{% endif %}">
 
             <form
                 method="GET"
@@ -274,12 +274,23 @@
 
 
                 <!-- Search button -->
-                <button
-                    type="submit"
-                    class="assets-search-button"
-                >
-                    Search
-                </button>
+                <div class="assets-filter-actions">
+
+                    <button
+                        type="submit"
+                        class="assets-search-button"
+                    >
+                        Search
+                    </button>
+
+                    <a
+                        href="{{ url_for('assets') }}"
+                        class="assets-clear-button"
+                    >
+                        Clear
+                    </a>
+
+                </div>
 
             </form>
 

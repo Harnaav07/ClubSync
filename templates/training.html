@@ -243,22 +243,24 @@
                 </div>
 
 
-                <!-- Search -->
-                <button
-                    type="submit"
-                    class="training-search-button"
-                >
-                    Search
-                </button>
+                <!-- Search and Clear -->
+                <div class="training-filter-actions">
 
+                    <button
+                        type="submit"
+                        class="training-search-button"
+                    >
+                        Search
+                    </button>
 
-                <!-- Clear -->
-                <a
-                    href="{{ url_for('training') }}"
-                    class="training-clear-button"
-                >
-                    Clear
-                </a>
+                    <a
+                        href="{{ url_for('training') }}"
+                        class="training-clear-button"
+                    >
+                        Clear
+                    </a>
+
+                </div>
 
             </form>
 

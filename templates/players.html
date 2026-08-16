@@ -79,7 +79,7 @@
             </div>
         </div>
 
-        <section class="players-toolbar">
+        <section class="players-toolbar {% if session['role'] == 'Admin' %}admin-layout{% else %}coach-layout{% endif %}">
 
             <form
                 method="GET"
@@ -87,79 +87,126 @@
                 class="player-search-form"
             >
 
-                <input
-                    type="text"
-                    name="search"
-                    placeholder="Search by player name or position"
-                    value="{{ search }}"
-                >
+                <div class="player-filter-field player-search-field">
 
-                <select name="age_group">
-                    <option value="">
-                        All Age Groups
-                    </option>
+                    <label for="playerSearch">
+                        Search Player
+                    </label>
 
-                    {% for group in [
-                        "U10",
-                        "U12",
-                        "U14",
-                        "U16",
-                        "U18",
-                        "Senior"
-                    ] %}
-
-                    <option
-                        value="{{ group }}"
-                        {% if selected_age_group == group %}
-                            selected
-                        {% endif %}
+                    <input
+                        id="playerSearch"
+                        type="text"
+                        name="search"
+                        placeholder="Search by player name or position"
+                        value="{{ search }}"
                     >
-                        {{ group }}
-                    </option>
 
-                    {% endfor %}
-                </select>
+                </div>
 
-                <select name="team">
-                    <option value="">
-                        All Teams
-                    </option>
 
-                    {% for team_record in teams %}
+                <div class="player-filter-field">
 
-                    <option
-                        value="{{ team_record['team'] }}"
-                        {% if selected_team == team_record['team'] %}
-                            selected
-                        {% endif %}
+                    <label for="playerAgeGroup">
+                        Age Group
+                    </label>
+
+                    <select
+                        id="playerAgeGroup"
+                        name="age_group"
                     >
-                        {{ team_record["team"] }}
-                    </option>
 
-                    {% endfor %}
-                </select>
+                        <option value="">
+                            All Age Groups
+                        </option>
 
-                <button type="submit">
-                    Search
-                </button>
+                        {% for group in [
+                            "U10",
+                            "U12",
+                            "U14",
+                            "U16",
+                            "U18",
+                            "Senior"
+                        ] %}
 
-                <a
-                    href="{{ url_for('players') }}"
-                    class="clear-filter-button"
-                >
-                    Clear
-                </a>
+                            <option
+                                value="{{ group }}"
+                                {% if selected_age_group == group %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ group }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="player-filter-field">
+
+                    <label for="playerTeam">
+                        Team
+                    </label>
+
+                    <select
+                        id="playerTeam"
+                        name="team"
+                    >
+
+                        <option value="">
+                            All Teams
+                        </option>
+
+                        {% for team_record in teams %}
+
+                            <option
+                                value="{{ team_record['team'] }}"
+                                {% if selected_team == team_record['team'] %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ team_record["team"] }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="player-filter-actions">
+
+                    <button
+                        type="submit"
+                        class="player-search-button"
+                    >
+                        Search
+                    </button>
+
+                    <a
+                        href="{{ url_for('players') }}"
+                        class="clear-filter-button"
+                    >
+                        Clear
+                    </a>
+
+                </div>
+
             </form>
+
 
             {% if session["role"] == "Admin" %}
 
-            <button
-                type="button"
-                class="add-player-button"
-                onclick="openAddPlayerModal()"
-            >
-                + Add Player
-            </button>
+                <button
+                    type="button"
+                    class="add-player-button"
+                    onclick="openAddPlayerModal()"
+                >
+                    + Add Player
+                </button>
 
             {% endif %}
 
