@@ -396,17 +396,17 @@
                                             <button
                                                 type="button"
                                                 class="fee-action-button"
-                                                onclick="openViewFeeModal(
-                                                    '{{ fee['fee_id'] }}',
-                                                    '{{ fee['first_name']|e }} {{ fee['last_name']|e }}',
-                                                    '{{ fee['age_group']|e }}',
-                                                    '{{ fee['season'] }}',
-                                                    '{{ fee['amount_due'] }}',
-                                                    '{{ fee['amount_paid'] }}',
-                                                    '{{ fee['payment_status'] }}',
-                                                    '{{ fee['due_date'] or '' }}',
-                                                    '{{ fee['notes']|default('', true)|e }}'
-                                                )"
+                                                onclick='openViewFeeModal(
+                                                    {{ fee["fee_id"]|tojson }},
+                                                    {{ ((fee["first_name"] or "") ~ " " ~ (fee["last_name"] or ""))|tojson }},
+                                                    {{ (fee["age_group"] or "")|tojson }},
+                                                    {{ fee["season"]|tojson }},
+                                                    {{ fee["amount_due"]|tojson }},
+                                                    {{ fee["amount_paid"]|tojson }},
+                                                    {{ (fee["payment_status"] or "")|tojson }},
+                                                    {{ (fee["due_date"] or "")|tojson }},
+                                                    {{ (fee["notes"] or "")|tojson }}
+                                                )'
                                             >
                                                 View
                                             </button>
@@ -437,17 +437,17 @@
                                         <button
                                             type="button"
                                             class="fee-action-button"
-                                            onclick="openViewFeeModal(
-                                                '{{ fee['fee_id'] }}',
-                                                '{{ fee['first_name']|e }} {{ fee['last_name']|e }}',
-                                                '{{ fee['age_group']|e }}',
-                                                '{{ fee['season'] }}',
-                                                '{{ fee['amount_due'] }}',
-                                                '{{ fee['amount_paid'] }}',
-                                                '{{ fee['payment_status'] }}',
-                                                '{{ fee['due_date'] or '' }}',
-                                                '{{ fee['notes']|default('', true)|e }}'
-                                            )"
+                                            onclick='openViewFeeModal(
+                                                {{ fee["fee_id"]|tojson }},
+                                                {{ ((fee["first_name"] or "") ~ " " ~ (fee["last_name"] or ""))|tojson }},
+                                                {{ (fee["age_group"] or "")|tojson }},
+                                                {{ fee["season"]|tojson }},
+                                                {{ fee["amount_due"]|tojson }},
+                                                {{ fee["amount_paid"]|tojson }},
+                                                {{ (fee["payment_status"] or "")|tojson }},
+                                                {{ (fee["due_date"] or "")|tojson }},
+                                                {{ (fee["notes"] or "")|tojson }}
+                                            )'
                                         >
                                             View
                                         </button>
