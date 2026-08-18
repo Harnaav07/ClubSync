@@ -666,7 +666,7 @@ cursor.execute("""
 # =========================================================
 # Database Indexes
 # =========================================================
-# Improve searching and filtering performance.
+# Improve searching and filtering performance
 
 
 # Players

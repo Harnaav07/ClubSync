@@ -28,6 +28,7 @@ FOOTBALL_DATA_API_KEY = os.getenv(
     "FOOTBALL_DATA_API_KEY"
 )
 
+# Set up FOOTBALL DATA BASE URL.
 FOOTBALL_DATA_BASE_URL = (
     "https://api.football-data.org/v4"
 )
@@ -50,6 +51,7 @@ app.secret_key = "clubsync_secret_key"
 def get_database_connection():
     """Connect to the ClubSync database."""
 
+    # Open the database connection.
     connection = sqlite3.connect("clubsync.db")
 
     # Access values using the column names
@@ -64,8 +66,10 @@ def get_database_connection():
 def get_user_by_email(email):
     """Find a user by email."""
 
+    # Open the database connection.
     connection = get_database_connection()
 
+    # Get the matching user record.
     user = connection.execute(
         """
         SELECT *
@@ -75,14 +79,17 @@ def get_user_by_email(email):
         (email,)
     ).fetchone()
 
+    # Close the database connection.
     connection.close()
 
+    # Return the result.
     return user
 
 
 def get_dashboard_data():
     """Get live dashboard data directly from ClubSync tables."""
 
+    # Open the database connection.
     connection = get_database_connection()
 
     # Make sure fee statuses are current before dashboard calculations.
@@ -189,6 +196,7 @@ def get_dashboard_data():
     connection.commit()
     connection.close()
 
+    # Return the result.
     return (
         stats,
         attendance_history,
@@ -199,6 +207,7 @@ def get_dashboard_data():
 def ensure_fees_table(connection):
     """Create the fees table if it does not exist."""
 
+    # Run the database command.
     connection.execute("""
         CREATE TABLE IF NOT EXISTS fees (
             fee_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -247,28 +256,39 @@ def calculate_fee_status(
 ):
     """Calculate the current payment status."""
 
+    # Check this condition before continuing.
     if amount_due > 0 and amount_paid >= amount_due:
+        # Return the result.
         return "Paid"
 
+    # Check this condition before continuing.
     if due_date:
+        # Validate the value safely.
         try:
+            # Set up parsed due date.
             parsed_due_date = date.fromisoformat(due_date)
 
+            # Check this condition before continuing.
             if parsed_due_date < date.today():
+                # Return the result.
                 return "Overdue"
 
         except ValueError:
             pass
 
+    # Check this condition before continuing.
     if amount_paid > 0:
+        # Return the result.
         return "Part Payment"
 
+    # Return the result.
     return "Unpaid"
 
 
 def refresh_fee_statuses(connection):
     """Update stored fee statuses using current values."""
 
+    # Run the fee query.
     fee_records = connection.execute("""
         SELECT
             fee_id,
@@ -279,14 +299,18 @@ def refresh_fee_statuses(connection):
         FROM fees
     """).fetchall()
 
+    # Process each saved record.
     for fee_record in fee_records:
+        # Set up current status.
         current_status = calculate_fee_status(
             float(fee_record["amount_due"]),
             float(fee_record["amount_paid"]),
             fee_record["due_date"]
         )
 
+        # Check this condition before continuing.
         if current_status != fee_record["payment_status"]:
+            # Run the database command.
             connection.execute("""
                 UPDATE fees
                 SET payment_status = ?,
@@ -301,12 +325,14 @@ def refresh_fee_statuses(connection):
 def refresh_overdue_fee_dashboard(connection):
     """Update the dashboard overdue-fee count."""
 
+    # Set up overdue count.
     overdue_count = connection.execute("""
         SELECT COUNT(*)
         FROM fees
         WHERE payment_status = 'Overdue'
     """).fetchone()[0]
 
+    # Run the database command.
     connection.execute("""
         UPDATE dashboard_stats
         SET overdue_fees = ?
@@ -316,9 +342,7 @@ def refresh_overdue_fee_dashboard(connection):
     ))
 
 
-# =========================================================
 # Football-Data.org API
-# =========================================================
 
 FOOTBALL_COMPETITIONS = {
     "": "All Competitions",
@@ -336,20 +360,27 @@ def get_football_matches(
 ):
     """Get upcoming football matches from Football-Data.org."""
 
+    # Check this condition before continuing.
     if not FOOTBALL_DATA_API_KEY:
 
+        # Return the result.
         return [], (
             "Football API token was not found. "
             "Check the .env file."
         )
 
+    # Reject values that are not allowed.
     if competition_code not in FOOTBALL_COMPETITIONS:
+        # Set up competition code.
         competition_code = ""
 
+    # Set up today.
     today = date.today()
 
+    # Set up date from.
     date_from = today.isoformat()
 
+    # Set up date to.
     date_to = (
         today + timedelta(days=30)
     ).isoformat()
@@ -359,6 +390,7 @@ def get_football_matches(
     # dedicated match resource.
     if competition_code:
 
+        # Set up url.
         url = (
             f"{FOOTBALL_DATA_BASE_URL}"
             f"/competitions/{competition_code}"
@@ -367,23 +399,28 @@ def get_football_matches(
 
     else:
 
+        # Set up url.
         url = (
             f"{FOOTBALL_DATA_BASE_URL}"
             "/matches"
         )
 
+    # Set up headers.
     headers = {
         "X-Auth-Token":
             FOOTBALL_DATA_API_KEY
     }
 
+    # Store values used in the query.
     parameters = {
         "dateFrom": date_from,
         "dateTo": date_to
     }
 
+    # Validate the value safely.
     try:
 
+        # Set up response.
         response = requests.get(
             url,
             headers=headers,
@@ -393,18 +430,22 @@ def get_football_matches(
 
         response.raise_for_status()
 
+        # Set up data.
         data = response.json()
 
+        # Set up matches.
         matches = data.get(
             "matches",
             []
         )
 
+        # Set up upcoming statuses.
         upcoming_statuses = {
             "SCHEDULED",
             "TIMED"
         }
 
+        # Set up upcoming matches.
         upcoming_matches = [
             match
             for match in matches
@@ -422,11 +463,13 @@ def get_football_matches(
 
     except requests.RequestException as error:
 
+        # Show the error in the terminal for debugging.
         print(
             "Football-Data.org API error:",
             error
         )
 
+        # Return the result.
         return [], (
             "Football information is temporarily "
             "unavailable."
@@ -434,11 +477,13 @@ def get_football_matches(
 
     except ValueError as error:
 
+        # Show the error in the terminal for debugging.
         print(
             "Football-Data.org JSON error:",
             error
         )
 
+        # Return the result.
         return [], (
             "Football information is temporarily "
             "unavailable."
@@ -451,8 +496,10 @@ def get_football_matches(
 
 @app.route("/", methods=["GET", "POST"])
 def login():
+    # Store the login error message.
     error = ""
 
+    # Handle the submitted form.
     if request.method == "POST":
 
         # Get login details
@@ -461,6 +508,7 @@ def login():
             ""
         ).strip().lower()
 
+        # Get the entered password.
         password = request.form.get(
             "password",
             ""
@@ -483,13 +531,16 @@ def login():
 
             # Send viewers to their page
             if user["role"] == "Viewer":
+                # Send the user to the correct page.
                 return redirect(url_for("viewer"))
 
             # Send admins and coaches to the dashboard
             return redirect(url_for("dashboard"))
 
+        # Store the login error message.
         error = "Invalid email or password."
 
+    # Display the page with the current data.
     return render_template(
         "login.html",
         error=error
@@ -505,26 +556,33 @@ def dashboard():
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Block viewer access
     if session["role"] == "Viewer":
+        # Send the user to the correct page.
         return redirect(url_for("viewer"))
 
+    # Set up stats, attendance history.
     (
         stats,
         attendance_history,
         overdue_fee_summary
     ) = get_dashboard_data()
 
+    # Get the selected football competition.
     selected_competition = request.args.get(
         "competition",
         ""
     ).strip()
 
+    # Reject values that are not allowed.
     if selected_competition not in FOOTBALL_COMPETITIONS:
+        # Get the selected football competition.
         selected_competition = ""
 
+    # Set up football matches, football api error.
     (
         football_matches,
         football_api_error
@@ -532,6 +590,7 @@ def dashboard():
         selected_competition
     )
 
+    # Display the page with the current data.
     return render_template(
         "dashboard.html",
         stats=stats,
@@ -552,10 +611,12 @@ def players():
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Block viewer access
     if session["role"] == "Viewer":
+        # Send the user to the correct page.
         return redirect(url_for("viewer"))
 
     # Get filters
@@ -564,16 +625,19 @@ def players():
         ""
     ).strip()
 
+    # Get the selected age group.
     age_group = request.args.get(
         "age_group",
         ""
     ).strip()
 
+    # Get the selected team.
     team = request.args.get(
         "team",
         ""
     ).strip()
 
+    # Open the database connection.
     connection = get_database_connection()
 
     # Start the player query
@@ -583,6 +647,7 @@ def players():
         WHERE 1 = 1
     """
 
+    # Store values used in the query.
     parameters = []
 
     # Search by name or position
@@ -595,6 +660,7 @@ def players():
             )
         """
 
+        # Set up search value.
         search_value = f"%{search}%"
 
         parameters.extend([
@@ -620,6 +686,7 @@ def players():
             first_name
     """
 
+    # Run the player query.
     player_records = connection.execute(
         query,
         parameters
@@ -633,8 +700,10 @@ def players():
         ORDER BY team
     """).fetchall()
 
+    # Close the database connection.
     connection.close()
 
+    # Display the page with the current data.
     return render_template(
         "players.html",
         players=player_records,
@@ -654,10 +723,12 @@ def add_player():
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Only admins can add players
     if session["role"] != "Admin":
+        # Send the user to the correct page.
         return redirect(url_for("players"))
 
     # Get player details
@@ -666,46 +737,55 @@ def add_player():
         ""
     ).strip()
 
+    # Get the player last name.
     last_name = request.form.get(
         "last_name",
         ""
     ).strip()
 
+    # Get the player date of birth.
     date_of_birth = request.form.get(
         "date_of_birth",
         ""
     ).strip()
 
+    # Get the selected age group.
     age_group = request.form.get(
         "age_group",
         ""
     ).strip()
 
+    # Get the selected team.
     team = request.form.get(
         "team",
         ""
     ).strip()
 
+    # Get the player position.
     position = request.form.get(
         "position",
         ""
     ).strip()
 
+    # Get the contact phone number.
     contact_phone = request.form.get(
         "contact_phone",
         ""
     ).strip()
 
+    # Get the emergency contact.
     emergency_contact = request.form.get(
         "emergency_contact",
         ""
     ).strip()
 
+    # Get the medical notes.
     medical_notes = request.form.get(
         "medical_notes",
         ""
     ).strip()
 
+    # Get the player status.
     registration_status = request.form.get(
         "registration_status",
         "Active"
@@ -720,8 +800,10 @@ def add_player():
         team,
         position
     ]):
+        # Send the user to the correct page.
         return redirect(url_for("players"))
 
+    # Open the database connection.
     connection = get_database_connection()
 
     # Add the player
@@ -752,9 +834,12 @@ def add_player():
         registration_status
     ))
 
+    # Save the database changes.
     connection.commit()
+    # Close the database connection.
     connection.close()
 
+    # Send the user to the correct page.
     return redirect(url_for("players"))
 
 
@@ -770,12 +855,15 @@ def edit_player(player_id):
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Only admins can edit players
     if session["role"] != "Admin":
+        # Send the user to the correct page.
         return redirect(url_for("players"))
 
+    # Open the database connection.
     connection = get_database_connection()
 
     # Update the player
@@ -846,9 +934,12 @@ def edit_player(player_id):
         player_id
     ))
 
+    # Save the database changes.
     connection.commit()
+    # Close the database connection.
     connection.close()
 
+    # Send the user to the correct page.
     return redirect(url_for("players"))
 
 
@@ -863,14 +954,18 @@ def delete_player(player_id):
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Only admins can delete players
     if session["role"] != "Admin":
+        # Send the user to the correct page.
         return redirect(url_for("players"))
 
+    # Open the database connection.
     connection = get_database_connection()
 
+    # Run the database command.
     connection.execute(
         """
         DELETE FROM players
@@ -879,9 +974,12 @@ def delete_player(player_id):
         (player_id,)
     )
 
+    # Save the database changes.
     connection.commit()
+    # Close the database connection.
     connection.close()
 
+    # Send the user to the correct page.
     return redirect(url_for("players"))
 
 
@@ -894,10 +992,12 @@ def attendance():
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Block viewer access
     if session["role"] == "Viewer":
+        # Send the user to the correct page.
         return redirect(url_for("viewer"))
 
     # Use today's date by default
@@ -910,6 +1010,7 @@ def attendance():
     try:
         date.fromisoformat(selected_date)
     except ValueError:
+        # Get the selected date.
         selected_date = date.today().isoformat()
 
     # Get the selected age group
@@ -925,37 +1026,46 @@ def attendance():
         "Late"
     }
 
+    # Open the database connection.
     connection = get_database_connection()
 
     # Save attendance
     if request.method == "POST":
 
+        # Get the players being marked.
         player_ids = request.form.getlist(
             "player_ids"
         )
 
+        # Get the coach name.
         coach_name = request.form.get(
             "coach_name",
             session.get("name", "")
         ).strip()
 
+        # Process each saved record.
         for player_id_value in player_ids:
 
+            # Ignore invalid ID values.
             if not player_id_value.isdigit():
                 continue
 
+            # Convert the player ID to a number.
             player_id = int(player_id_value)
 
+            # Get the attendance status.
             attendance_status = request.form.get(
                 f"attendance_{player_id}",
                 ""
             ).strip()
 
+            # Get the attendance note.
             attendance_note = request.form.get(
                 f"note_{player_id}",
                 ""
             ).strip()
 
+            # Reject values that are not allowed.
             if attendance_status not in allowed_statuses:
                 continue
 
@@ -973,6 +1083,7 @@ def attendance():
                 selected_age_group
             )).fetchone()
 
+            # Stop if the record is not valid.
             if not player_exists:
                 continue
 
@@ -1007,9 +1118,12 @@ def attendance():
                 coach_name
             ))
 
+        # Save the database changes.
         connection.commit()
+        # Close the database connection.
         connection.close()
 
+        # Send the user to the correct page.
         return redirect(
             url_for(
                 "attendance",
@@ -1025,6 +1139,7 @@ def attendance():
 
     if selected_age_group:
 
+        # Set up attendance players.
         attendance_players = connection.execute("""
             SELECT
                 players.player_id,
@@ -1066,8 +1181,10 @@ def attendance():
         ORDER BY age_group
     """).fetchall()
 
+    # Close the database connection.
     connection.close()
 
+    # Display the page with the current data.
     return render_template(
         "attendance.html",
         players=attendance_players,
@@ -1087,10 +1204,12 @@ def teams():
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Block viewer access
     if session["role"] == "Viewer":
+        # Send the user to the correct page.
         return redirect(url_for("viewer"))
 
     # Get the selected age group
@@ -1105,6 +1224,7 @@ def teams():
         "4-3-3"
     ).strip()
 
+    # Set up allowed formations.
     allowed_formations = {
         "4-3-3",
         "4-4-2",
@@ -1156,7 +1276,9 @@ def teams():
         }
     }
 
+    # Reject values that are not allowed.
     if selected_formation not in allowed_formations:
+        # Get the selected formation.
         selected_formation = "4-3-3"
 
     # Only accept position names that belong to
@@ -1208,14 +1330,18 @@ def teams():
         )
     """)
 
+    # Save the database changes.
     connection.commit()
 
     # Save the selected line-up
     if request.method == "POST":
 
+        # Check this condition before continuing.
         if not selected_age_group:
+            # Close the database connection.
             connection.close()
 
+            # Send the user to the correct page.
             return redirect(
                 url_for(
                     "teams",
@@ -1234,18 +1360,23 @@ def teams():
             selected_formation
         ))
 
+        # Track players already used.
         used_player_ids = set()
 
+        # Process each saved record.
         for slot_name in allowed_slots:
 
+            # Get the selected player ID.
             player_id_value = request.form.get(
                 f"lineup_{slot_name}",
                 ""
             ).strip()
 
+            # Ignore invalid ID values.
             if not player_id_value.isdigit():
                 continue
 
+            # Convert the player ID to a number.
             player_id = int(player_id_value)
 
             # Prevent the same player from being
@@ -1266,9 +1397,11 @@ def teams():
                 selected_age_group
             )).fetchone()
 
+            # Stop if the record is not valid.
             if not player:
                 continue
 
+            # Run the database command.
             connection.execute("""
                 INSERT INTO team_lineups (
                     age_group,
@@ -1296,9 +1429,12 @@ def teams():
 
             used_player_ids.add(player_id)
 
+        # Save the database changes.
         connection.commit()
+        # Close the database connection.
         connection.close()
 
+        # Send the user to the correct page.
         return redirect(
             url_for(
                 "teams",
@@ -1323,8 +1459,10 @@ def teams():
     team_players = []
     saved_lineup = {}
 
+    # Check this condition before continuing.
     if selected_age_group:
 
+        # Store players for the selected age group.
         team_players = connection.execute("""
             SELECT
                 player_id,
@@ -1346,6 +1484,7 @@ def teams():
             selected_age_group,
         )).fetchall()
 
+        # Get the saved line-up records.
         saved_records = connection.execute("""
             SELECT
                 team_lineups.slot_name,
@@ -1382,8 +1521,10 @@ def teams():
                 "position": record["position"]
             }
 
+    # Close the database connection.
     connection.close()
 
+    # Display the page with the current data.
     return render_template(
         "teams.html",
         age_groups=age_groups,
@@ -1404,40 +1545,51 @@ def fees():
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Block viewer access
     if session["role"] == "Viewer":
+        # Send the user to the correct page.
         return redirect(url_for("viewer"))
 
+    # Get the search value.
     search = request.args.get(
         "search",
         ""
     ).strip()
 
+    # Get the selected fee status.
     selected_status = request.args.get(
         "status",
         ""
     ).strip()
 
+    # Get the selected age group.
     selected_age_group = request.args.get(
         "age_group",
         ""
     ).strip()
 
+    # Get the current year.
     current_year = date.today().year
 
+    # Get the selected season.
     selected_season_value = request.args.get(
         "season",
         str(current_year)
     ).strip()
 
+    # Validate the value safely.
     try:
+        # Convert the season to a number.
         selected_season = int(selected_season_value)
 
     except ValueError:
+        # Convert the season to a number.
         selected_season = current_year
 
+    # Set up allowed statuses.
     allowed_statuses = {
         "",
         "Paid",
@@ -1446,17 +1598,22 @@ def fees():
         "Unpaid"
     }
 
+    # Reject values that are not allowed.
     if selected_status not in allowed_statuses:
+        # Get the selected fee status.
         selected_status = ""
 
+    # Open the database connection.
     connection = get_database_connection()
     ensure_fees_table(connection)
 
     # Keep overdue statuses accurate as dates pass.
     refresh_fee_statuses(connection)
     refresh_overdue_fee_dashboard(connection)
+    # Save the database changes.
     connection.commit()
 
+    # Build the database query.
     query = """
         SELECT
             fees.fee_id,
@@ -1481,10 +1638,12 @@ def fees():
         WHERE fees.season = ?
     """
 
+    # Store values used in the query.
     parameters = [
         selected_season
     ]
 
+    # Check this condition before continuing.
     if search:
         query += """
             AND (
@@ -1497,6 +1656,7 @@ def fees():
             )
         """
 
+        # Set up search value.
         search_value = f"%{search}%"
 
         parameters.extend([
@@ -1505,6 +1665,7 @@ def fees():
             search_value
         ])
 
+    # Check this condition before continuing.
     if selected_status:
         query += """
             AND fees.payment_status = ?
@@ -1514,6 +1675,7 @@ def fees():
             selected_status
         )
 
+    # Check this condition before continuing.
     if selected_age_group:
         query += """
             AND players.age_group = ?
@@ -1529,6 +1691,7 @@ def fees():
             players.first_name
     """
 
+    # Run the fee query.
     fee_records = connection.execute(
         query,
         parameters
@@ -1591,6 +1754,7 @@ def fees():
         selected_season,
     )).fetchone()
 
+    # Get active players for fee records.
     players_for_fees = connection.execute("""
         SELECT
             player_id,
@@ -1604,6 +1768,7 @@ def fees():
             first_name
     """).fetchall()
 
+    # Get age groups for the filter.
     age_groups = connection.execute("""
         SELECT DISTINCT age_group
         FROM players
@@ -1613,12 +1778,14 @@ def fees():
         ORDER BY age_group
     """).fetchall()
 
+    # Get seasons already stored.
     saved_seasons = connection.execute("""
         SELECT DISTINCT season
         FROM fees
         ORDER BY season DESC
     """).fetchall()
 
+    # Build the season list.
     seasons = {
         current_year - 2,
         current_year - 1,
@@ -1626,18 +1793,22 @@ def fees():
         current_year + 1
     }
 
+    # Process each saved record.
     for season_record in saved_seasons:
         seasons.add(
             int(season_record["season"])
         )
 
+    # Build the season list.
     seasons = sorted(
         seasons,
         reverse=True
     )
 
+    # Close the database connection.
     connection.close()
 
+    # Display the page with the current data.
     return render_template(
         "fees.html",
         fees=fee_records,
@@ -1667,52 +1838,68 @@ def add_fee():
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Only admins can create fee records.
     if session["role"] != "Admin":
+        # Send the user to the correct page.
         return redirect(url_for("fees"))
 
+    # Get the selected player ID.
     player_id_value = request.form.get(
         "player_id",
         ""
     ).strip()
 
+    # Set up season value.
     season_value = request.form.get(
         "season",
         ""
     ).strip()
 
+    # Set up amount due value.
     amount_due_value = request.form.get(
         "amount_due",
         ""
     ).strip()
 
+    # Set up amount paid value.
     amount_paid_value = request.form.get(
         "amount_paid",
         "0"
     ).strip()
 
+    # Get the due date.
     due_date = request.form.get(
         "due_date",
         ""
     ).strip()
 
+    # Get the notes.
     notes = request.form.get(
         "notes",
         ""
     ).strip()
 
+    # Validate the value safely.
     try:
+        # Convert the player ID to a number.
         player_id = int(player_id_value)
+        # Set up season.
         season = int(season_value)
+        # Get the amount due.
         amount_due = float(amount_due_value)
+        # Set up amount paid.
         amount_paid = float(amount_paid_value)
 
     except (TypeError, ValueError):
+        # Send the user to the correct page.
         return redirect(url_for("fees"))
 
+    # Check this condition before continuing.
     if amount_due < 0 or amount_paid < 0:
+        # Send the user to the correct page.
         return redirect(url_for("fees"))
 
     # A payment cannot exceed the amount due.
@@ -1721,15 +1908,19 @@ def add_fee():
         amount_due
     )
 
+    # Validate the value safely.
     try:
         date.fromisoformat(due_date)
 
     except ValueError:
+        # Send the user to the correct page.
         return redirect(url_for("fees"))
 
+    # Open the database connection.
     connection = get_database_connection()
     ensure_fees_table(connection)
 
+    # Check the player can be selected.
     player = connection.execute("""
         SELECT player_id
         FROM players
@@ -1739,16 +1930,21 @@ def add_fee():
         player_id,
     )).fetchone()
 
+    # Stop if the record is not valid.
     if not player:
+        # Close the database connection.
         connection.close()
+        # Send the user to the correct page.
         return redirect(url_for("fees"))
 
+    # Work out the payment status.
     payment_status = calculate_fee_status(
         amount_due,
         amount_paid,
         due_date
     )
 
+    # Set the payment date.
     payment_date = (
         date.today().isoformat()
         if amount_paid > 0
@@ -1808,9 +2004,12 @@ def add_fee():
 
     refresh_overdue_fee_dashboard(connection)
 
+    # Save the database changes.
     connection.commit()
+    # Close the database connection.
     connection.close()
 
+    # Send the user to the correct page.
     return redirect(
         url_for(
             "fees",
@@ -1828,36 +2027,47 @@ def add_fee_payment(fee_id):
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Only admins can record payments.
     if session["role"] != "Admin":
+        # Send the user to the correct page.
         return redirect(url_for("fees"))
 
+    # Get the payment amount.
     payment_amount_value = request.form.get(
         "payment_amount",
         ""
     ).strip()
 
+    # Get the payment notes.
     payment_notes = request.form.get(
         "notes",
         ""
     ).strip()
 
+    # Validate the value safely.
     try:
+        # Set up payment amount.
         payment_amount = float(
             payment_amount_value
         )
 
     except (TypeError, ValueError):
+        # Send the user to the correct page.
         return redirect(url_for("fees"))
 
+    # Check this condition before continuing.
     if payment_amount <= 0:
+        # Send the user to the correct page.
         return redirect(url_for("fees"))
 
+    # Open the database connection.
     connection = get_database_connection()
     ensure_fees_table(connection)
 
+    # Get the selected fee record.
     fee_record = connection.execute("""
         SELECT
             fee_id,
@@ -1872,26 +2082,35 @@ def add_fee_payment(fee_id):
         fee_id,
     )).fetchone()
 
+    # Check this condition before continuing.
     if not fee_record:
+        # Close the database connection.
         connection.close()
+        # Send the user to the correct page.
         return redirect(url_for("fees"))
 
+    # Get the amount due.
     amount_due = float(
         fee_record["amount_due"]
     )
 
+    # Get the amount already paid.
     existing_amount_paid = float(
         fee_record["amount_paid"]
     )
 
+    # Calculate the remaining balance.
     remaining_amount = max(
         amount_due - existing_amount_paid,
         0
     )
 
+    # Check this condition before continuing.
     if remaining_amount <= 0:
+        # Close the database connection.
         connection.close()
 
+        # Send the user to the correct page.
         return redirect(
             url_for(
                 "fees",
@@ -1899,39 +2118,49 @@ def add_fee_payment(fee_id):
             )
         )
 
+    # Limit the payment to the remaining balance.
     accepted_payment = min(
         payment_amount,
         remaining_amount
     )
 
+    # Calculate the new amount paid.
     new_amount_paid = (
         existing_amount_paid +
         accepted_payment
     )
 
+    # Work out the payment status.
     payment_status = calculate_fee_status(
         amount_due,
         new_amount_paid,
         fee_record["due_date"]
     )
 
+    # Get the existing payment notes.
     existing_notes = (
         fee_record["notes"] or ""
     ).strip()
 
+    # Check this condition before continuing.
     if payment_notes and existing_notes:
+        # Combine the payment notes.
         combined_notes = (
             existing_notes +
             "\n" +
             payment_notes
         )
 
+    # Check this condition before continuing.
     elif payment_notes:
+        # Combine the payment notes.
         combined_notes = payment_notes
 
     else:
+        # Combine the payment notes.
         combined_notes = existing_notes
 
+    # Run the database command.
     connection.execute("""
         UPDATE fees
         SET amount_paid = ?,
@@ -1950,9 +2179,12 @@ def add_fee_payment(fee_id):
 
     refresh_overdue_fee_dashboard(connection)
 
+    # Save the database changes.
     connection.commit()
+    # Close the database connection.
     connection.close()
 
+    # Send the user to the correct page.
     return redirect(
         url_for(
             "fees",
@@ -1969,6 +2201,7 @@ def add_fee_payment(fee_id):
 def ensure_assets_table(connection):
     """Create the assets table if it does not exist."""
 
+    # Run the database command.
     connection.execute("""
         CREATE TABLE IF NOT EXISTS assets (
             asset_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -2002,11 +2235,13 @@ def ensure_assets_table(connection):
 def refresh_asset_dashboard(connection):
     """Update the dashboard asset count."""
 
+    # Count the saved assets.
     asset_count = connection.execute("""
         SELECT COUNT(*)
         FROM assets
     """).fetchone()[0]
 
+    # Run the database command.
     connection.execute("""
         UPDATE dashboard_stats
         SET club_assets = ?
@@ -2021,32 +2256,39 @@ def assets():
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Block viewer access
     if session["role"] == "Viewer":
+        # Send the user to the correct page.
         return redirect(url_for("viewer"))
 
+    # Get the search value.
     search = request.args.get(
         "search",
         ""
     ).strip()
 
+    # Get the selected asset category.
     selected_category = request.args.get(
         "category",
         ""
     ).strip()
 
+    # Get the selected asset condition.
     selected_condition = request.args.get(
         "condition",
         ""
     ).strip()
 
+    # Get the selected availability.
     selected_availability = request.args.get(
         "availability",
         ""
     ).strip()
 
+    # Set up allowed categories.
     allowed_categories = {
         "",
         "Balls",
@@ -2056,6 +2298,7 @@ def assets():
         "Equipment"
     }
 
+    # Set up allowed conditions.
     allowed_conditions = {
         "",
         "Good",
@@ -2063,6 +2306,7 @@ def assets():
         "Damaged"
     }
 
+    # Set up allowed availability.
     allowed_availability = {
         "",
         "Available",
@@ -2070,26 +2314,36 @@ def assets():
         "Unavailable"
     }
 
+    # Reject values that are not allowed.
     if selected_category not in allowed_categories:
+        # Get the selected asset category.
         selected_category = ""
 
+    # Reject values that are not allowed.
     if selected_condition not in allowed_conditions:
+        # Get the selected asset condition.
         selected_condition = ""
 
+    # Reject values that are not allowed.
     if selected_availability not in allowed_availability:
+        # Get the selected availability.
         selected_availability = ""
 
+    # Open the database connection.
     connection = get_database_connection()
     ensure_assets_table(connection)
 
+    # Build the database query.
     query = """
         SELECT *
         FROM assets
         WHERE 1 = 1
     """
 
+    # Store values used in the query.
     parameters = []
 
+    # Check this condition before continuing.
     if search:
         query += """
             AND (
@@ -2099,6 +2353,7 @@ def assets():
             )
         """
 
+        # Set up search value.
         search_value = f"%{search}%"
 
         parameters.extend([
@@ -2107,14 +2362,17 @@ def assets():
             search_value
         ])
 
+    # Check this condition before continuing.
     if selected_category:
         query += " AND category = ?"
         parameters.append(selected_category)
 
+    # Check this condition before continuing.
     if selected_condition:
         query += " AND condition = ?"
         parameters.append(selected_condition)
 
+    # Check this condition before continuing.
     if selected_availability:
         query += " AND availability = ?"
         parameters.append(selected_availability)
@@ -2123,13 +2381,16 @@ def assets():
         ORDER BY name
     """
 
+    # Run the asset query.
     asset_records = connection.execute(
         query,
         parameters
     ).fetchall()
 
+    # Close the database connection.
     connection.close()
 
+    # Display the page with the current data.
     return render_template(
         "assets.html",
         assets=asset_records,
@@ -2145,37 +2406,45 @@ def add_asset():
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Only admins can add assets
     if session["role"] != "Admin":
+        # Send the user to the correct page.
         return redirect(url_for("assets"))
 
+    # Get the asset name.
     name = request.form.get(
         "name",
         ""
     ).strip()
 
+    # Get the asset category.
     category = request.form.get(
         "category",
         ""
     ).strip()
 
+    # Get the asset condition.
     condition = request.form.get(
         "condition",
         ""
     ).strip()
 
+    # Get the asset availability.
     availability = request.form.get(
         "availability",
         ""
     ).strip()
 
+    # Get who the asset is allocated to.
     allocated_to = request.form.get(
         "allocated_to",
         ""
     ).strip()
 
+    # Set up allowed categories.
     allowed_categories = {
         "Balls",
         "Bibs",
@@ -2184,29 +2453,35 @@ def add_asset():
         "Equipment"
     }
 
+    # Set up allowed conditions.
     allowed_conditions = {
         "Good",
         "Needs Review",
         "Damaged"
     }
 
+    # Set up allowed availability.
     allowed_availability = {
         "Available",
         "In use",
         "Unavailable"
     }
 
+    # Reject values that are not allowed.
     if (
         not name
         or category not in allowed_categories
         or condition not in allowed_conditions
         or availability not in allowed_availability
     ):
+        # Send the user to the correct page.
         return redirect(url_for("assets"))
 
+    # Open the database connection.
     connection = get_database_connection()
     ensure_assets_table(connection)
 
+    # Run the database command.
     connection.execute("""
         INSERT INTO assets (
             name,
@@ -2236,9 +2511,12 @@ def add_asset():
 
     refresh_asset_dashboard(connection)
 
+    # Save the database changes.
     connection.commit()
+    # Close the database connection.
     connection.close()
 
+    # Send the user to the correct page.
     return redirect(
         url_for(
             "assets",
@@ -2255,37 +2533,45 @@ def edit_asset(asset_id):
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Only admins can edit assets
     if session["role"] != "Admin":
+        # Send the user to the correct page.
         return redirect(url_for("assets"))
 
+    # Get the asset name.
     name = request.form.get(
         "name",
         ""
     ).strip()
 
+    # Get the asset category.
     category = request.form.get(
         "category",
         ""
     ).strip()
 
+    # Get the asset condition.
     condition = request.form.get(
         "condition",
         ""
     ).strip()
 
+    # Get the asset availability.
     availability = request.form.get(
         "availability",
         ""
     ).strip()
 
+    # Get who the asset is allocated to.
     allocated_to = request.form.get(
         "allocated_to",
         ""
     ).strip()
 
+    # Set up allowed categories.
     allowed_categories = {
         "Balls",
         "Bibs",
@@ -2294,29 +2580,35 @@ def edit_asset(asset_id):
         "Equipment"
     }
 
+    # Set up allowed conditions.
     allowed_conditions = {
         "Good",
         "Needs Review",
         "Damaged"
     }
 
+    # Set up allowed availability.
     allowed_availability = {
         "Available",
         "In use",
         "Unavailable"
     }
 
+    # Reject values that are not allowed.
     if (
         not name
         or category not in allowed_categories
         or condition not in allowed_conditions
         or availability not in allowed_availability
     ):
+        # Send the user to the correct page.
         return redirect(url_for("assets"))
 
+    # Open the database connection.
     connection = get_database_connection()
     ensure_assets_table(connection)
 
+    # Run the database command.
     connection.execute("""
         UPDATE assets
         SET name = ?,
@@ -2337,9 +2629,12 @@ def edit_asset(asset_id):
 
     refresh_asset_dashboard(connection)
 
+    # Save the database changes.
     connection.commit()
+    # Close the database connection.
     connection.close()
 
+    # Send the user to the correct page.
     return redirect(
         url_for(
             "assets",
@@ -2355,6 +2650,7 @@ def edit_asset(asset_id):
 def ensure_training_table(connection):
     """Create the training_sessions table if it does not exist."""
 
+    # Run the database command.
     connection.execute("""
         CREATE TABLE IF NOT EXISTS training_sessions (
             session_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -2395,6 +2691,7 @@ def ensure_training_table(connection):
         )
     """)
 
+    # Check the training table columns.
     training_columns = {
         column[1]
         for column in connection.execute(
@@ -2402,11 +2699,14 @@ def ensure_training_table(connection):
         ).fetchall()
     }
 
+    # Reject values that are not allowed.
     if "team_type" not in training_columns:
+        # Run the database command.
         connection.execute("""
             ALTER TABLE training_sessions
             ADD COLUMN team_type TEXT NOT NULL DEFAULT ''
         """)
+        # Save the database changes.
         connection.commit()
 
 
@@ -2415,17 +2715,21 @@ def training():
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Viewer users use their separate read-only page.
     if session["role"] == "Viewer":
+        # Send the user to the correct page.
         return redirect(url_for("viewer"))
 
+    # Get the selected team.
     selected_team = request.args.get(
         "team",
         ""
     ).strip()
 
+    # Set up allowed teams.
     allowed_teams = {
         "",
         "U10",
@@ -2436,19 +2740,24 @@ def training():
         "Senior"
     }
 
+    # Reject values that are not allowed.
     if selected_team not in allowed_teams:
+        # Get the selected team.
         selected_team = ""
 
+    # Get the selected session type.
     selected_session_type = request.args.get(
         "session_type",
         ""
     ).strip()
 
+    # Get the selected date.
     selected_date = request.args.get(
         "training_date",
         ""
     ).strip()
 
+    # Set up allowed session types.
     allowed_session_types = {
         "",
         "Training",
@@ -2457,39 +2766,49 @@ def training():
         "Tactical"
     }
 
+    # Reject values that are not allowed.
     if selected_session_type not in allowed_session_types:
+        # Get the selected session type.
         selected_session_type = ""
 
     # Validate date filter when one is supplied.
     if selected_date:
+        # Validate the value safely.
         try:
             date.fromisoformat(selected_date)
         except ValueError:
+            # Get the selected date.
             selected_date = ""
 
+    # Open the database connection.
     connection = get_database_connection()
     ensure_training_table(connection)
 
+    # Build the database query.
     query = """
         SELECT *
         FROM training_sessions
         WHERE 1 = 1
     """
 
+    # Store values used in the query.
     parameters = []
 
+    # Check this condition before continuing.
     if selected_team:
         query += """
             AND team = ?
         """
         parameters.append(selected_team)
 
+    # Check this condition before continuing.
     if selected_session_type:
         query += """
             AND session_type = ?
         """
         parameters.append(selected_session_type)
 
+    # Check this condition before continuing.
     if selected_date:
         query += """
             AND session_date = ?
@@ -2503,6 +2822,7 @@ def training():
             team ASC
     """
 
+    # Set up training records.
     training_records = connection.execute(
         query,
         parameters
@@ -2519,8 +2839,10 @@ def training():
         ORDER BY team
     """).fetchall()
 
+    # Close the database connection.
     connection.close()
 
+    # Display the page with the current data.
     return render_template(
         "training.html",
         training_sessions=training_records,
@@ -2537,47 +2859,57 @@ def add_training():
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Admins and Coaches can create training sessions.
     if session["role"] not in ["Admin", "Coach"]:
+        # Send the user to the correct page.
         return redirect(url_for("viewer"))
 
+    # Get the training date.
     session_date = request.form.get(
         "session_date",
         ""
     ).strip()
 
+    # Get the selected team.
     team = request.form.get(
         "team",
         ""
     ).strip()
 
+    # Get the team type.
     team_type = request.form.get(
         "team_type",
         ""
     ).strip()
 
+    # Get the session type.
     session_type = request.form.get(
         "session_type",
         ""
     ).strip()
 
+    # Get the training time.
     session_time = request.form.get(
         "session_time",
         ""
     ).strip()
 
+    # Get the training location.
     location = request.form.get(
         "location",
         ""
     ).strip()
 
+    # Get the coach name.
     coach_name = request.form.get(
         "coach_name",
         ""
     ).strip()
 
+    # Set up allowed teams.
     allowed_teams = {
         "U10",
         "U12",
@@ -2587,6 +2919,7 @@ def add_training():
         "Senior"
     }
 
+    # Set up allowed session types.
     allowed_session_types = {
         "Training",
         "Skills Session",
@@ -2594,6 +2927,7 @@ def add_training():
         "Tactical"
     }
 
+    # Reject values that are not allowed.
     if (
         not session_date
         or team not in allowed_teams
@@ -2603,11 +2937,14 @@ def add_training():
         or not location
         or not coach_name
     ):
+        # Send the user to the correct page.
         return redirect(url_for("training"))
 
+    # Validate the value safely.
     try:
         date.fromisoformat(session_date)
     except ValueError:
+        # Send the user to the correct page.
         return redirect(url_for("training"))
 
     # HTML time inputs should submit HH:MM.
@@ -2617,17 +2954,24 @@ def add_training():
         or not session_time[:2].isdigit()
         or not session_time[3:].isdigit()
     ):
+        # Send the user to the correct page.
         return redirect(url_for("training"))
 
+    # Set up hour.
     hour = int(session_time[:2])
+    # Set up minute.
     minute = int(session_time[3:])
 
+    # Check this condition before continuing.
     if hour > 23 or minute > 59:
+        # Send the user to the correct page.
         return redirect(url_for("training"))
 
+    # Open the database connection.
     connection = get_database_connection()
     ensure_training_table(connection)
 
+    # Run the database command.
     connection.execute("""
         INSERT INTO training_sessions (
             session_date,
@@ -2664,9 +3008,12 @@ def add_training():
         session.get("user_id")
     ))
 
+    # Save the database changes.
     connection.commit()
+    # Close the database connection.
     connection.close()
 
+    # Send the user to the correct page.
     return redirect(
         url_for(
             "training",
@@ -2683,47 +3030,57 @@ def edit_training(session_id):
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Admins and Coaches can edit training sessions.
     if session["role"] not in ["Admin", "Coach"]:
+        # Send the user to the correct page.
         return redirect(url_for("viewer"))
 
+    # Get the training date.
     session_date = request.form.get(
         "session_date",
         ""
     ).strip()
 
+    # Get the selected team.
     team = request.form.get(
         "team",
         ""
     ).strip()
 
+    # Get the team type.
     team_type = request.form.get(
         "team_type",
         ""
     ).strip()
 
+    # Get the session type.
     session_type = request.form.get(
         "session_type",
         ""
     ).strip()
 
+    # Get the training time.
     session_time = request.form.get(
         "session_time",
         ""
     ).strip()
 
+    # Get the training location.
     location = request.form.get(
         "location",
         ""
     ).strip()
 
+    # Get the coach name.
     coach_name = request.form.get(
         "coach_name",
         ""
     ).strip()
 
+    # Set up allowed teams.
     allowed_teams = {
         "U10",
         "U12",
@@ -2733,6 +3090,7 @@ def edit_training(session_id):
         "Senior"
     }
 
+    # Set up allowed session types.
     allowed_session_types = {
         "Training",
         "Skills Session",
@@ -2740,6 +3098,7 @@ def edit_training(session_id):
         "Tactical"
     }
 
+    # Reject values that are not allowed.
     if (
         not session_date
         or team not in allowed_teams
@@ -2749,30 +3108,41 @@ def edit_training(session_id):
         or not location
         or not coach_name
     ):
+        # Send the user to the correct page.
         return redirect(url_for("training"))
 
+    # Validate the value safely.
     try:
         date.fromisoformat(session_date)
     except ValueError:
+        # Send the user to the correct page.
         return redirect(url_for("training"))
 
+    # Ignore invalid ID values.
     if (
         len(session_time) != 5
         or session_time[2] != ":"
         or not session_time[:2].isdigit()
         or not session_time[3:].isdigit()
     ):
+        # Send the user to the correct page.
         return redirect(url_for("training"))
 
+    # Set up hour.
     hour = int(session_time[:2])
+    # Set up minute.
     minute = int(session_time[3:])
 
+    # Check this condition before continuing.
     if hour > 23 or minute > 59:
+        # Send the user to the correct page.
         return redirect(url_for("training"))
 
+    # Open the database connection.
     connection = get_database_connection()
     ensure_training_table(connection)
 
+    # Run the database command.
     connection.execute("""
         UPDATE training_sessions
         SET session_date = ?,
@@ -2795,9 +3165,12 @@ def edit_training(session_id):
         session_id
     ))
 
+    # Save the database changes.
     connection.commit()
+    # Close the database connection.
     connection.close()
 
+    # Send the user to the correct page.
     return redirect(
         url_for(
             "training",
@@ -2814,15 +3187,19 @@ def delete_training(session_id):
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Admins and Coaches can delete training sessions.
     if session["role"] not in ["Admin", "Coach"]:
+        # Send the user to the correct page.
         return redirect(url_for("viewer"))
 
+    # Open the database connection.
     connection = get_database_connection()
     ensure_training_table(connection)
 
+    # Run the database command.
     connection.execute("""
         DELETE FROM training_sessions
         WHERE session_id = ?
@@ -2830,9 +3207,12 @@ def delete_training(session_id):
         session_id,
     ))
 
+    # Save the database changes.
     connection.commit()
+    # Close the database connection.
     connection.close()
 
+    # Send the user to the correct page.
     return redirect(url_for("training"))
 
 
@@ -2844,12 +3224,15 @@ def viewer():
 
     # Check login
     if "role" not in session:
+        # Send the user to the correct page.
         return redirect(url_for("login"))
 
     # Only Viewer accounts can use this page.
     if session["role"] != "Viewer":
+        # Send the user to the correct page.
         return redirect(url_for("dashboard"))
 
+    # Open the database connection.
     connection = get_database_connection()
     ensure_training_table(connection)
 
@@ -2877,8 +3260,10 @@ def viewer():
         date.today().isoformat(),
     )).fetchall()
 
+    # Close the database connection.
     connection.close()
 
+    # Display the page with the current data.
     return render_template(
         "viewer.html",
         training_sessions=training_sessions
@@ -2891,8 +3276,10 @@ def viewer():
 @app.route("/logout")
 def logout():
 
+    # Clear the current session.
     session.clear()
 
+    # Send the user to the correct page.
     return redirect(url_for("login"))
 
 
