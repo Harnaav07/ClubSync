@@ -643,7 +643,7 @@ if "updated_at" not in training_columns:
 # =========================================================
 # Dashboard Asset Count
 # =========================================================
-# Keep the dashboard Club Assets summary
+# Keep the Dashboard Club Assets summary
 # linked to the actual Assets table.
 
 cursor.execute("""

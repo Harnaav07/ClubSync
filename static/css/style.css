@@ -3052,28 +3052,47 @@ body {
 }
 
 .training-table-wrapper {
+    width: 100%;
+    max-width: 100%;
     overflow-x: auto;
+    overflow-y: hidden;
 }
 
 .training-table {
     width: 100%;
+    min-width: 1180px;
     border: 2px solid #c4c4c4;
     border-collapse: collapse;
+    table-layout: fixed;
     background: #ffffff;
 }
 
+/* Keep cells aligned and let each row draw one continuous line */
 .training-table th,
 .training-table td {
-    padding: 19px 24px;
-    border-bottom: 2px solid #c4c4c4;
+    padding: 19px 16px;
+    border: none;
     text-align: center;
     vertical-align: middle;
+    overflow: hidden;
 }
 
 .training-table th {
     background: #f4f4f4;
     font-size: 16px;
     font-weight: 700;
+}
+
+.training-table thead tr {
+    border-bottom: 2px solid #c4c4c4;
+}
+
+.training-table tbody tr {
+    border-bottom: 2px solid #c4c4c4;
+}
+
+.training-table tbody tr:last-child {
+    border-bottom: none;
 }
 
 .training-table th:first-child,
@@ -3089,25 +3108,37 @@ body {
     background: #eef5f8;
 }
 
-.training-table tbody tr:last-child td {
-    border-bottom: none;
+/* Reserve enough space for both action buttons at every screen size. */
+.training-table th:last-child,
+.training-table td:last-child {
+    width: 210px;
+    min-width: 210px;
+    padding-left: 14px;
+    padding-right: 14px;
+    overflow: visible;
 }
 
 .training-actions {
     display: flex;
+    width: 100%;
+    max-width: 100%;
     align-items: center;
     justify-content: center;
     gap: 10px;
+    flex-wrap: nowrap;
 }
 
 .training-edit-button,
 .training-delete-button {
+    flex: 0 0 auto;
+    min-width: 74px;
     border: none;
     border-radius: 8px;
-    padding: 9px 14px;
+    padding: 9px 12px;
     font: inherit;
     font-size: 14px;
     font-weight: 700;
+    white-space: nowrap;
     cursor: pointer;
 }
 
@@ -3130,13 +3161,28 @@ body {
 }
 
 .training-delete-form {
-    display: inline;
+    display: block;
+    flex: 0 0 auto;
+    margin: 0;
 }
 
 .training-empty-state {
     padding: 42px !important;
     color: #6b7280;
     text-align: center !important;
+}
+
+/* On smaller screens the whole table scrolls instead of crushing the Actions column. */
+@media (max-width: 1200px) {
+    .training-table {
+        min-width: 1180px;
+    }
+
+    .training-table th:last-child,
+    .training-table td:last-child {
+        width: 210px;
+        min-width: 210px;
+    }
 }
 
 

@@ -5,7 +5,7 @@ The system was created using Flask, SQLite, HTML, CSS and JavaScript.
 
 ## Main Features
 
-- Secure login
+- Secure Login
 - Admin, Coach and Viewer user roles
 - Player management
 - Attendance tracking

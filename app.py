@@ -325,14 +325,14 @@ def refresh_fee_statuses(connection):
 def refresh_overdue_fee_dashboard(connection):
     """Update the dashboard overdue-fee count."""
 
-    # Set up overdue count.
+    # Set up overdue count
     overdue_count = connection.execute("""
         SELECT COUNT(*)
         FROM fees
         WHERE payment_status = 'Overdue'
     """).fetchone()[0]
 
-    # Run the database command.
+    # Run the database command
     connection.execute("""
         UPDATE dashboard_stats
         SET overdue_fees = ?
